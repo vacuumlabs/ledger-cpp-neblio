@@ -1,20 +1,25 @@
-#include "ledgercpp/error.hpp"
-#include "ledgercpp/hid_device.hpp"
-#include "ledgercpp/utils.hpp"
+#include "error.h"
+#include "hid_device.h"
+#include "utils.h"
 
 #include <cassert>
 
-namespace ledger {
-	Error HID::open() {
-		if (!opened_) {
+namespace ledger
+{
+	Error HID::open()
+	{
+		if (!opened_)
+		{
 			auto devices = enumerate_devices(vendor_id_);
-			if (devices.empty()) {
+			if (devices.empty())
+			{
 				return Error::DEVICE_NOT_FOUND;
 			}
 
 			path_ = devices.at(0);
 			device_ = hid_open_path(path_.c_str());
-			if (!device_) {
+			if (!device_)
+			{
 				return Error::DEVICE_OPEN_FAIL;
 			}
 
@@ -26,7 +31,8 @@ namespace ledger {
 		return Error::SUCCESS;
 	}
 
-	int HID::send(const std::vector<uint8_t>& data) {
+	int HID::send(const std::vector<uint8_t> &data)
+	{
 		if (data.empty())
 			return -1;
 
@@ -37,7 +43,8 @@ namespace ledger {
 		size_t seq_idx = 0;
 		size_t length = 0;
 
-		while (offset < data_new.size()) {
+		while (offset < data_new.size())
+		{
 			// Header: channel (0x0101), tag (0x05), sequence index
 			std::vector<uint8_t> header{0x01, 0x01, 0x05};
 
@@ -45,9 +52,12 @@ namespace ledger {
 			header.insert(header.end(), seq_idx_bytes.begin(), seq_idx_bytes.end());
 
 			std::vector<uint8_t>::iterator it;
-			if (data_new.size() - offset < 64 - header.size()) {
+			if (data_new.size() - offset < 64 - header.size())
+			{
 				it = data_new.end();
-			} else {
+			}
+			else
+			{
 				it = data_new.begin() + offset + 64 - header.size();
 			}
 
@@ -66,7 +76,8 @@ namespace ledger {
 		return length;
 	}
 
-	int HID::recv(std::vector<uint8_t>& rdata) {
+	int HID::recv(std::vector<uint8_t> &rdata)
+	{
 		int seq_idx = 0;
 		uint8_t buf[64];
 
@@ -88,7 +99,8 @@ namespace ledger {
 		auto data_len = utils::bytes_to_int(std::vector<uint8_t>(data_chunk.begin() + 5, data_chunk.begin() + 7));
 		std::vector<uint8_t> data(data_chunk.begin() + 7, data_chunk.end());
 
-		while (data.size() < data_len) {
+		while (data.size() < data_len)
+		{
 			uint8_t read_bytes[64];
 			if (hid_read_timeout(device_, read_bytes, sizeof(read_bytes), 1000) == -1)
 				return -1;
@@ -102,29 +114,34 @@ namespace ledger {
 		return sw;
 	}
 
-	void HID::close() noexcept {
-		if (opened_) {
+	void HID::close() noexcept
+	{
+		if (opened_)
+		{
 			hid_close(device_);
 			opened_ = false;
 		}
 		hid_exit();
 	}
 
-	bool HID::is_open() const {
+	bool HID::is_open() const
+	{
 		return opened_;
 	}
 
-	std::vector<std::string> HID::enumerate_devices(unsigned short vendor_id) noexcept {
+	std::vector<std::string> HID::enumerate_devices(unsigned short vendor_id) noexcept
+	{
 		std::vector<std::string> devices;
 
 		struct hid_device_info *devs, *cur_dev;
 
 		devs = hid_enumerate(vendor_id, 0x0);
 		cur_dev = devs;
-		while (cur_dev) {
+		while (cur_dev)
+		{
 			if (cur_dev->interface_number == 0 ||
-				// MacOS specific
-				cur_dev->usage_page == 0xffa0)
+					// MacOS specific
+					cur_dev->usage_page == 0xffa0)
 			{
 				devices.emplace_back(cur_dev->path);
 			}

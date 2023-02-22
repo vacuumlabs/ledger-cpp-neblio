@@ -1,13 +1,16 @@
 #pragma once
 
-#include "ledgercpp/comm.hpp"
+#include "comm.h"
 
 #include <memory>
 
-namespace ledger {
-	class Transport {
+namespace ledger
+{
+	class Transport
+	{
 	public:
-		enum class TransportType : int {
+		enum class TransportType : int
+		{
 			HID = 0,
 		};
 
@@ -17,9 +20,9 @@ namespace ledger {
 		void close() noexcept;
 
 	private:
-		int send(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const std::vector<uint8_t>& cdata);
-		int recv(std::vector<uint8_t>& rdata);
-		static std::vector<uint8_t>apdu_header(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t lc);
+		int send(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const std::vector<uint8_t> &cdata);
+		int recv(std::vector<uint8_t> &rdata);
+		static std::vector<uint8_t> apdu_header(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t lc);
 
 		std::unique_ptr<Comm> comm_;
 	};

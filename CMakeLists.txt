@@ -17,17 +17,18 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(HIDAPI REQUIRED ${hidapi_name})
 
 set(LEDGERCPP_SOURCE
-        ledgercpp/comm.hpp
+        ledgercpp/comm.h
         ledgercpp/error.cpp
-        ledgercpp/error.hpp
+        ledgercpp/error.h
         ledgercpp/hid_device.cpp
-        ledgercpp/hid_device.hpp
+        ledgercpp/hid_device.h
         ledgercpp/ledger.cpp
-        ledgercpp/ledger.hpp
+        ledgercpp/ledger.h
         ledgercpp/transport.cpp
-        ledgercpp/transport.hpp
+        ledgercpp/transport.h
         ledgercpp/utils.cpp
-        ledgercpp/utils.hpp
+        ledgercpp/utils.h
+        ledgercpp/main.cpp
         )
 
 add_library(ledgercpp ${LEDGERCPP_SOURCE})
@@ -38,7 +39,7 @@ target_include_directories(ledgercpp
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         )
 
-file(GLOB_RECURSE EDV_INCLUDE_FILES "ledgercpp/*.hpp*")
+file(GLOB_RECURSE EDV_INCLUDE_FILES "ledgercpp/*.h*")
 set_target_properties(ledgercpp
         PROPERTIES
         PUBLIC_HEADER "${EDV_INCLUDE_FILES}"
