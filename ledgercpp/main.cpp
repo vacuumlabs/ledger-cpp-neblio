@@ -24,6 +24,8 @@ void printHex(std::vector<uint8_t> vec)
 
 int main()
 {
+  std::cout << "Opening Ledger connection" << std::endl;
+
   auto ledger = ledger::Ledger();
   auto openError = ledger.open();
   if (openError != ledger::Error::SUCCESS)
@@ -31,6 +33,8 @@ int main()
     std::cout << ledger::error_message(openError) << std::endl;
     return -1;
   }
+
+  std::cout << "Getting public key - please confirm action on Ledger" << std::endl;
 
   auto result = ledger.get_public_key(0, true);
   auto resultError = std::get<0>(result);
