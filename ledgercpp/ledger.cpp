@@ -20,7 +20,25 @@ namespace ledger
 
 	std::tuple<ledger::Error, std::vector<uint8_t>> Ledger::get_public_key(uint32_t account, bool confirm)
 	{
-		auto payload = utils::int_to_bytes(account, 4);
+		auto payload = std::vector<uint8_t>();
+		payload.push_back(3);
+
+		// m/44'/146'/0' derivation path
+		payload.push_back(0x80);
+		payload.push_back(0x00);
+		payload.push_back(0x00);
+		payload.push_back(0x2C); // 44
+
+		payload.push_back(0x80);
+		payload.push_back(0x00);
+		payload.push_back(0x00);
+		payload.push_back(0x92); // 146
+
+		payload.push_back(0x80);
+		payload.push_back(0x00);
+		payload.push_back(0x00);
+		payload.push_back(0x00); // 0
+
 		auto [err, buffer] = transport_->exchange(APDU::CLA, APDU::INS_GET_PUBLIC_KEY, confirm, 0x00, payload);
 		if (err != Error::SUCCESS)
 			return {err, {}};

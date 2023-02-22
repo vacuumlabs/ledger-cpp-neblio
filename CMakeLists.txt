@@ -16,6 +16,10 @@ endif()
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HIDAPI REQUIRED ${hidapi_name})
 
+set(HIDAPI_WITH_LIBUSB TRUE)
+
+find_package(hidapi REQUIRED)
+
 set(LEDGERCPP_SOURCE
         ledgercpp/comm.h
         ledgercpp/error.cpp
@@ -31,24 +35,9 @@ set(LEDGERCPP_SOURCE
         ledgercpp/main.cpp
         )
 
-add_library(ledgercpp ${LEDGERCPP_SOURCE})
-add_library(ledgercpp::ledgercpp ALIAS ledgercpp)
+add_executable(main ${LEDGERCPP_SOURCE})
+add_executable(main::main ALIAS main)
 
-target_include_directories(ledgercpp
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-        )
+target_link_libraries(main PRIVATE hidapi-libusb)
 
 file(GLOB_RECURSE EDV_INCLUDE_FILES "ledgercpp/*.h*")
-set_target_properties(ledgercpp
-        PROPERTIES
-        PUBLIC_HEADER "${EDV_INCLUDE_FILES}"
-        )
-
-include(GNUInstallDirs)
-install(TARGETS ledgercpp
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ledgercpp
-        )
