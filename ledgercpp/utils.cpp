@@ -22,4 +22,9 @@ namespace ledger::utils
 		}
 		return bytes;
 	}
+
+	uint32_t hardened(uint32_t n)
+	{
+		return n | 0x80000000;
+	}
 } // namespace ledger::utils
