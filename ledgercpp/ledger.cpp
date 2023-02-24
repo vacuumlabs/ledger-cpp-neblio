@@ -4,7 +4,7 @@
 
 namespace ledger
 {
-	Ledger::Ledger() { this->transport_ = std::make_unique<Transport>(Transport::TransportType::HID); }
+	Ledger::Ledger() { this->transport_ = std::unique_ptr<Transport>(new Transport(Transport::TransportType::HID)); }
 
 	Ledger::~Ledger() { transport_->close(); }
 
@@ -20,7 +20,9 @@ namespace ledger
 		utils::append_vector(payload, utils::int_to_bytes(utils::hardened(146), 4));
 		utils::append_vector(payload, utils::int_to_bytes(utils::hardened(account), 4));
 
-		auto [err, buffer] = transport_->exchange(APDU::CLA, APDU::INS_GET_PUBLIC_KEY, confirm, 0x00, payload);
+		auto result = transport_->exchange(APDU::CLA, APDU::INS_GET_PUBLIC_KEY, confirm, 0x00, payload);
+		auto err = std::get<0>(result);
+		auto buffer = std::get<1>(result);
 		if (err != Error::SUCCESS)
 			return {err, {}};
 		return {err, std::vector<uint8_t>(buffer.begin() + 1, buffer.end())};
@@ -30,7 +32,9 @@ namespace ledger
 	{
 		auto payload = utils::int_to_bytes(account, 4);
 		payload.insert(payload.end(), msg.begin(), msg.end());
-		auto [err, buffer] = transport_->exchange(APDU::CLA, APDU::INS_SIGN, 0x00, 0x00, payload);
+		auto result = transport_->exchange(APDU::CLA, APDU::INS_SIGN, 0x00, 0x00, payload);
+		auto err = std::get<0>(result);
+		auto buffer = std::get<1>(result);
 		if (err != Error::SUCCESS)
 			return {err, {}};
 		return {err, std::vector<uint8_t>(buffer.begin() + 1, buffer.end())};

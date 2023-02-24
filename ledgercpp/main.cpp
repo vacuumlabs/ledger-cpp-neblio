@@ -26,7 +26,7 @@ int main()
 {
   std::cout << "Opening Ledger connection" << std::endl;
 
-  auto ledger = ledger::Ledger();
+  ledger::Ledger ledger;
   auto openError = ledger.open();
   if (openError != ledger::Error::SUCCESS)
   {

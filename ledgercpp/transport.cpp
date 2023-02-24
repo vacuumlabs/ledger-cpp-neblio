@@ -9,7 +9,7 @@ namespace ledger
 		switch (type)
 		{
 		case TransportType::HID:
-			comm_ = std::make_unique<HID>();
+			comm_ = std::unique_ptr<HID>(new HID());
 			break;
 		}
 	}
