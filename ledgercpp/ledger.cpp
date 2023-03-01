@@ -3,6 +3,7 @@
 #include "utils.h"
 
 #include <algorithm>
+#include <iostream>
 
 namespace ledger
 {
@@ -10,7 +11,16 @@ namespace ledger
 
 	Ledger::~Ledger() { transport_->close(); }
 
-	Error Ledger::open() { return transport_->open(); }
+	Error Ledger::open()
+	{
+		std::cout << "Opening Ledger connection." << std::endl;
+		auto openError = transport_->open();
+		if (openError != ledger::Error::SUCCESS)
+		{
+			throw ledger::error_message(openError);
+		}
+		std::cout << "Ledger connection opened." << std::endl;
+	}
 
 	std::tuple<ledger::Error, std::vector<uint8_t>> Ledger::get_public_key(uint32_t account, bool confirm)
 	{
@@ -105,11 +115,8 @@ namespace ledger
 		tx.version = utils::bytes_to_int(wtf);
 		offset += 4;
 
-		// tx.time = utils::bytes_to_int(utils::splice(transaction, offset, 4));
-		// offset += 4;
-
-		// tx.time = utils::bytes_to_int(utils::splice(transaction, offset, 1));
-		// offset += 1;
+		tx.time = utils::bytes_to_int(utils::splice(transaction, offset, 4));
+		offset += 4;
 
 		auto varint = GetVarint(transaction, offset);
 		auto inputsCount = std::get<0>(varint);
@@ -214,41 +221,46 @@ namespace ledger
 		return {Error::SUCCESS, finalResults};
 	}
 
-	std::tuple<Error, std::vector<uint8_t>> Ledger::GetTrustedInputSinglePacket(uint32_t indexLookup, const std::vector<uint8_t> &transaction)
+	std::tuple<Error, std::vector<uint8_t>> Ledger::GetTrustedInput(uint32_t indexLookup, Tx tx)
 	{
-		auto tx = SplitTransaction(transaction);
+		std::vector<uint8_t> serializedTransaction;
+		utils::append_uint32(serializedTransaction, tx.version, true);
+		utils::append_uint32(serializedTransaction, tx.time);
 
-		std::vector<uint8_t> data;
-		utils::append_uint32(data, indexLookup);
-		utils::append_uint32(data, tx.version, true);
-		// data.push_back(0);
-		// data.push_back(1);
-		// utils::append_uint32(data, tx.time);
-
-		utils::append_vector(data, CreateVarint(tx.inputs.size()));
+		utils::append_vector(serializedTransaction, CreateVarint(tx.inputs.size()));
 
 		for (auto input : tx.inputs)
 		{
-			utils::append_vector(data, input.prevout);
-			utils::append_vector(data, CreateVarint(input.script.size()));
-			utils::append_vector(data, input.script);
-			utils::append_uint32(data, input.sequence);
+			utils::append_vector(serializedTransaction, input.prevout);
+			utils::append_vector(serializedTransaction, CreateVarint(input.script.size()));
+			utils::append_vector(serializedTransaction, input.script);
+			utils::append_uint32(serializedTransaction, input.sequence);
 		}
 
-		utils::append_vector(data, CreateVarint(tx.outputs.size()));
+		utils::append_vector(serializedTransaction, CreateVarint(tx.outputs.size()));
 
 		for (auto output : tx.outputs)
 		{
-			utils::append_uint64(data, output.amount);
-			utils::append_vector(data, CreateVarint(output.script.size()));
-			utils::append_vector(data, output.script);
+			utils::append_uint64(serializedTransaction, output.amount);
+			utils::append_vector(serializedTransaction, CreateVarint(output.script.size()));
+			utils::append_vector(serializedTransaction, output.script);
 		}
 
-		utils::append_uint32(data, tx.locktime);
+		utils::append_uint32(serializedTransaction, tx.locktime);
 
+		return GetTrustedInput(indexLookup, serializedTransaction);
+	}
+
+	std::tuple<Error, std::vector<uint8_t>> Ledger::GetTrustedInput(uint32_t indexLookup, const std::vector<uint8_t> &serializedTransaction)
+	{
 		auto MAX_CHUNK_SIZE = 255;
 		std::vector<std::vector<uint8_t>> chunks;
 		auto offset = 0;
+
+		std::vector<uint8_t> data;
+		utils::append_uint32(data, indexLookup);
+
+		utils::append_vector(data, serializedTransaction);
 
 		while (offset != data.size())
 		{
@@ -274,7 +286,7 @@ namespace ledger
 		return {Error::SUCCESS, finalResults};
 	}
 
-	std::tuple<Error, std::vector<uint8_t>> Ledger::GetTrustedInput(uint32_t indexLookup, const std::vector<uint8_t> &transaction)
+	std::tuple<Error, std::vector<uint8_t>> Ledger::_NOT_WORKING_GetTrustedInput_NOT_WORKING_(uint32_t indexLookup, const std::vector<uint8_t> &transaction)
 	{
 		auto tx = SplitTransaction(transaction);
 

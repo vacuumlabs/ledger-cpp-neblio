@@ -63,8 +63,9 @@ namespace ledger
 
 		std::tuple<Error, std::vector<uint8_t>> ProcessScriptBlocks(const std::vector<uint8_t> &script, uint32_t sequence);
 		std::tuple<Error, std::vector<uint8_t>> GetTrustedInputRaw(bool firstRound, uint32_t indexLookup, const std::vector<uint8_t> &data);
-		std::tuple<Error, std::vector<uint8_t>> GetTrustedInput(uint32_t indexLookup, const std::vector<uint8_t> &transaction);
-		std::tuple<Error, std::vector<uint8_t>> GetTrustedInputSinglePacket(uint32_t indexLookup, const std::vector<uint8_t> &transaction);
+		std::tuple<Error, std::vector<uint8_t>> _NOT_WORKING_GetTrustedInput_NOT_WORKING_(uint32_t indexLookup, const std::vector<uint8_t> &transaction);
+		std::tuple<Error, std::vector<uint8_t>> GetTrustedInput(uint32_t indexLookup, const std::vector<uint8_t> &serializedTransaction);
+		std::tuple<Error, std::vector<uint8_t>> GetTrustedInput(uint32_t indexLookup, Tx tx);
 
 		std::tuple<uint32_t, uint8_t> GetVarint(const std::vector<uint8_t> &data, uint32_t offset);
 		std::vector<uint8_t> CreateVarint(uint32_t value);

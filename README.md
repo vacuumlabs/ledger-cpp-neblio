@@ -46,10 +46,10 @@ make
 Run:
 
 ```
-./main
+./main pub-key
 ```
 
-The output with our dev Ledger should be:
+The output for `pub-key` with our dev Ledger should be:
 
 ```
 Opening Ledger connection
@@ -59,3 +59,9 @@ Public key: 04 a3 82 4d 53 14 3b 63 82 f1 8e 85 b8 ce 64 98 48 92 9a a6 03 36 6b
 Address: NVPJxQh3e8gcX8r4PuRFFwqgm6W7gTebCt
 Chain code: 5c 7a 1d 1a f8 2c e6 40 6e ca 0b d4 d1 89 8b 1d a2 40 a8 ab 0b 50 0d 95 bb a3 94 e7 0d 6b be b2
 ```
+
+For other sample outputs see [Expected APDUs and Results.md](<doc/Expected APDUs and Results.md>).
+
+## Debug
+
+Debugging in VS Code should work via CMake Tools extension. Just pressing `CTRL+F5` should work.
