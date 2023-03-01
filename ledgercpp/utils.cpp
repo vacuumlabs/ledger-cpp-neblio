@@ -24,7 +24,7 @@ namespace ledger::utils
 		return value;
 	}
 
-	std::vector<uint8_t> int_to_bytes(uint32_t n, uint32_t length)
+	std::vector<uint8_t> int_to_bytes(uint32_t n, uint32_t length, bool littleEndian)
 	{
 		std::vector<uint8_t> bytes;
 		bytes.reserve(length);
@@ -32,16 +32,21 @@ namespace ledger::utils
 		{
 			bytes.emplace_back((n >> 8 * (length - 1 - i)) & 0xFF);
 		}
-		// std::reverse(bytes.begin(), bytes.end());
+
+		if (littleEndian)
+		{
+			std::reverse(bytes.begin(), bytes.end());
+		}
+
 		return bytes;
 	}
 
-	void append_uint32(std::vector<uint8_t> &vector, uint32_t n)
+	void append_uint32(std::vector<uint8_t> &vector, uint32_t n, bool littleEndian)
 	{
-		append_vector(vector, int_to_bytes(n, 4));
+		append_vector(vector, int_to_bytes(n, 4, littleEndian));
 	}
 
-	std::vector<uint8_t> uint64_to_bytes(uint64_t n, uint32_t length)
+	std::vector<uint8_t> uint64_to_bytes(uint64_t n, uint32_t length, bool littleEndian)
 	{
 		std::vector<uint8_t> bytes;
 		bytes.reserve(length);
@@ -49,13 +54,18 @@ namespace ledger::utils
 		{
 			bytes.emplace_back((n >> 8 * (length - 1 - i)) & 0xFF);
 		}
-		// std::reverse(bytes.begin(), bytes.end());
+
+		if (littleEndian)
+		{
+			std::reverse(bytes.begin(), bytes.end());
+		}
+
 		return bytes;
 	}
 
-	void append_uint64(std::vector<uint8_t> &vector, uint32_t n)
+	void append_uint64(std::vector<uint8_t> &vector, uint32_t n, bool littleEndian)
 	{
-		append_vector(vector, uint64_to_bytes(n, 4));
+		append_vector(vector, uint64_to_bytes(n, 4, littleEndian));
 	}
 
 	uint32_t hardened(uint32_t n)

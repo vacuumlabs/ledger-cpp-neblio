@@ -261,7 +261,7 @@ namespace ledger
 		for (auto output : tx.outputs)
 		{
 			std::vector<uint8_t> outputData;
-			utils::append_uint64(outputData, output.amount);
+			utils::append_uint64(outputData, output.amount, false);
 			utils::append_vector(outputData, CreateVarint(output.script.size()));
 			utils::append_vector(outputData, output.script);
 
