@@ -26,6 +26,15 @@ namespace ledger
 		uint32_t locktime;
 	};
 
+	struct TrustedInput
+	{
+		uint16_t random;
+		std::vector<uint8_t> prevTxId;
+		uint32_t outIndex;
+		uint64_t amount;
+		std::vector<uint8_t> hmac;
+	};
+
 	class Ledger
 	{
 		enum APDU : uint8_t
@@ -55,6 +64,7 @@ namespace ledger
 		std::tuple<Error, std::vector<uint8_t>> ProcessScriptBlocks(const std::vector<uint8_t> &script, uint32_t sequence);
 		std::tuple<Error, std::vector<uint8_t>> GetTrustedInputRaw(bool firstRound, uint32_t indexLookup, const std::vector<uint8_t> &data);
 		std::tuple<Error, std::vector<uint8_t>> GetTrustedInput(uint32_t indexLookup, const std::vector<uint8_t> &transaction);
+		std::tuple<Error, std::vector<uint8_t>> GetTrustedInputSinglePacket(uint32_t indexLookup, const std::vector<uint8_t> &transaction);
 
 		std::tuple<uint32_t, uint8_t> GetVarint(const std::vector<uint8_t> &data, uint32_t offset);
 		std::vector<uint8_t> CreateVarint(uint32_t value);

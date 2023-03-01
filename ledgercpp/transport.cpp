@@ -1,6 +1,7 @@
 #include "error.h"
 #include "hid_device.h"
 #include "transport.h"
+#include "utils.h"
 
 namespace ledger
 {
@@ -48,6 +49,9 @@ namespace ledger
 
 		auto header = apdu_header(cla, ins, p1, p2, cdata.size());
 		header.insert(header.end(), cdata.begin(), cdata.end());
+
+		utils::printHex(header);
+
 		return comm_->send(header);
 	}
 

@@ -1,9 +1,21 @@
 #include "utils.h"
 
 #include <algorithm>
+#include <iostream>
+#include <iomanip>
 
 namespace ledger::utils
 {
+	void printHex(std::vector<uint8_t> vec)
+	{
+		for (int i = 0; i < vec.size(); i++)
+		{
+			std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)vec[i];
+		}
+
+		std::cout << std::dec << std::endl;
+	}
+
 	uint64_t bytes_to_uint64(const std::vector<uint8_t> &bytes)
 	{
 		uint64_t value = 0;
@@ -63,9 +75,9 @@ namespace ledger::utils
 		return bytes;
 	}
 
-	void append_uint64(std::vector<uint8_t> &vector, uint32_t n, bool littleEndian)
+	void append_uint64(std::vector<uint8_t> &vector, uint64_t n, bool littleEndian)
 	{
-		append_vector(vector, uint64_to_bytes(n, 4, littleEndian));
+		append_vector(vector, uint64_to_bytes(n, 8, littleEndian));
 	}
 
 	uint32_t hardened(uint32_t n)
