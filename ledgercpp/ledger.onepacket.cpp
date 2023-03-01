@@ -162,6 +162,7 @@ namespace ledger
 		{
 			std::vector<uint8_t> prefix;
 			utils::append_uint32(prefix, indexLookup);
+			std::reverse(prefix.begin(), prefix.end());
 			utils::append_vector(data, prefix);
 		}
 
@@ -178,7 +179,7 @@ namespace ledger
 
 	std::tuple<Error, std::vector<uint8_t>> Ledger::ProcessScriptBlocks(const std::vector<uint8_t> &script, uint32_t sequence)
 	{
-		auto MAX_SCRIPT_BLOCK = 50;
+		auto MAX_SCRIPT_BLOCK = 255;
 
 		std::vector<std::vector<uint8_t>> scriptBlocks;
 		auto offset = 0;
@@ -194,7 +195,7 @@ namespace ledger
 			else
 			{
 				auto block = utils::splice(script, offset, blockSize);
-				utils::append_uint32(block, sequence);
+				// utils::append_uint32(block, sequence);
 
 				scriptBlocks.push_back(block);
 			}
@@ -221,59 +222,73 @@ namespace ledger
 		auto tx = SplitTransaction(transaction);
 
 		std::vector<uint8_t> data;
+		utils::append_uint32(data, indexLookup);
+		std::reverse(data.begin(), data.end());
 		utils::append_uint32(data, tx.version);
 		utils::append_uint32(data, tx.time);
 		utils::append_vector(data, CreateVarint(tx.inputs.size()));
 
-		auto result = GetTrustedInputRaw(true, indexLookup, data);
-		if (std::get<0>(result) != Error::SUCCESS)
-		{
-			return {std::get<0>(result), {}};
-		}
+		// auto result = GetTrustedInputRaw(true, indexLookup, data);
+		// if (std::get<0>(result) != Error::SUCCESS)
+		// {
+		// 	return {std::get<0>(result), {}};
+		// }
 
 		for (auto input : tx.inputs)
 		{
-			std::vector<uint8_t> inputData;
-			utils::append_vector(inputData, input.prevout);
-			utils::append_vector(inputData, CreateVarint(input.script.size()));
+			// std::vector<uint8_t> data;
+			utils::append_vector(data, input.prevout);
+			utils::append_vector(data, CreateVarint(input.script.size()));
 
-			result = GetTrustedInputRaw(false, 0, inputData);
-			if (std::get<0>(result) != Error::SUCCESS)
-			{
-				return {std::get<0>(result), {}};
-			}
+			// result = GetTrustedInputRaw(false, 0, data);
+			// if (std::get<0>(result) != Error::SUCCESS)
+			// {
+			// 	return {std::get<0>(result), {}};
+			// }
 
-			auto result = ProcessScriptBlocks(input.script, input.sequence);
-			if (std::get<0>(result) != Error::SUCCESS)
-			{
-				return result;
-			}
+			// auto error = ProcessScriptBlocks(input.script, input.sequence);
+			// if (error != Error::SUCCESS)
+			// {
+			// 	return {error, {}};
+			// }
+			utils::append_vector(data, input.script);
+			utils::append_vector(data, utils::int_to_bytes(input.sequence, 4));
 		}
 
-		result = GetTrustedInputRaw(false, 0, CreateVarint(tx.outputs.size()));
-		if (std::get<0>(result) != Error::SUCCESS)
-		{
-			return {std::get<0>(result), {}};
-		}
+		// result = GetTrustedInputRaw(false, 0, CreateVarint(tx.outputs.size()));
+		// if (std::get<0>(result) != Error::SUCCESS)
+		// {
+		// 	return {std::get<0>(result), {}};
+		// }
 
 		utils::append_vector(data, CreateVarint(tx.outputs.size()));
 
 		for (auto output : tx.outputs)
 		{
-			std::vector<uint8_t> outputData;
-			utils::append_uint64(outputData, output.amount);
-			utils::append_vector(outputData, CreateVarint(output.script.size()));
-			utils::append_vector(outputData, output.script);
+			// std::vector<uint8_t> data;
+			utils::append_uint64(data, output.amount);
+			utils::append_vector(data, CreateVarint(output.script.size()));
+			utils::append_vector(data, output.script);
 
-			result = GetTrustedInputRaw(false, 0, outputData);
-			if (std::get<0>(result) != Error::SUCCESS)
-			{
-				return {std::get<0>(result), {}};
-			}
+			// result = GetTrustedInputRaw(false, 0, data);
+			// if (std::get<0>(result) != Error::SUCCESS)
+			// {
+			// 	return {std::get<0>(result), {}};
+			// }
 		}
 
-		auto locktimeBytes = utils::int_to_bytes(tx.locktime, 4);
-		return GetTrustedInputRaw(false, 0, locktimeBytes);
+		auto wtf = utils::int_to_bytes(tx.locktime, 4);
+		std::reverse(wtf.begin(), wtf.end());
+		// return GetTrustedInputRaw(false, 0, wtf);
+		utils::append_vector(data, wtf);
+
+		auto result = ProcessScriptBlocks(data, 0);
+		if (std::get<0>(result) != Error::SUCCESS)
+		{
+			return {std::get<0>(result), {}};
+		}
+
+		return result;
 	}
 
 	void Ledger::SignTransaction()

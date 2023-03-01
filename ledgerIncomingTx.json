@@ -1,0 +1,51 @@
+{
+  "result": {
+    "hex": "01000000b59cfc6301cec8e9fad831395e6d626837a478e4d082ba9c4e6f5c6e6047725de7df2e1b57000000006b483045022100959ea739d1cbc75ab8d32ff8d6f9a559c6644ef149b7f7f03107c0e08b2662f4022059f8f0da281c21edbe2da8c46552fd2099ede592fed1f5f06e7b2cb5ec78830d0121029d178514d15a2223c48adf548ae65dcbfdfc271054e1ce893aab0306123003c5ffffffff0200e1f505000000001976a914b5a94913cb123972678f8ab2727cb810add78afb88ace0a0f78a2e0000001976a9140109ec1c263c6ef86c20e45d0ae214334dff6b7e88ac00000000",
+    "size": 230,
+    "txid": "c0341d34699dc57e0c7ee2500da99a2cd738f8f8300bf740ec1584011754017c",
+    "version": 1,
+    "time": 1677499573,
+    "locktime": 0,
+    "ntp1": false,
+    "vin": [
+      {
+        "txid": "571b2edfe75d7247606e5c6f4e9cba82d0e478a43768626d5e3931d8fae9c8ce",
+        "vout": 0,
+        "scriptSig": {
+          "asm": "3045022100959ea739d1cbc75ab8d32ff8d6f9a559c6644ef149b7f7f03107c0e08b2662f4022059f8f0da281c21edbe2da8c46552fd2099ede592fed1f5f06e7b2cb5ec78830d01 029d178514d15a2223c48adf548ae65dcbfdfc271054e1ce893aab0306123003c5",
+          "hex": "483045022100959ea739d1cbc75ab8d32ff8d6f9a559c6644ef149b7f7f03107c0e08b2662f4022059f8f0da281c21edbe2da8c46552fd2099ede592fed1f5f06e7b2cb5ec78830d0121029d178514d15a2223c48adf548ae65dcbfdfc271054e1ce893aab0306123003c5"
+        },
+        "sequence": 4294967295,
+        "tokens": []
+      }
+    ],
+    "vout": [
+      {
+        "value": 1.0,
+        "n": 0,
+        "scriptPubKey": {
+          "asm": "OP_DUP OP_HASH160 b5a94913cb123972678f8ab2727cb810add78afb OP_EQUALVERIFY OP_CHECKSIG",
+          "reqSigs": 1,
+          "type": "pubkeyhash",
+          "hex": "76a914b5a94913cb123972678f8ab2727cb810add78afb88ac",
+          "addresses": ["TSXk6wUvK2PRc9pfijr13r4XW5WvaaM4V7"]
+        },
+        "tokens": []
+      },
+      {
+        "value": 1998.0,
+        "n": 1,
+        "scriptPubKey": {
+          "asm": "OP_DUP OP_HASH160 0109ec1c263c6ef86c20e45d0ae214334dff6b7e OP_EQUALVERIFY OP_CHECKSIG",
+          "reqSigs": 1,
+          "type": "pubkeyhash",
+          "hex": "76a9140109ec1c263c6ef86c20e45d0ae214334dff6b7e88ac",
+          "addresses": ["TA4hZfW5pVCpQSHoXgvtfNAT2YiVYiwFgB"]
+        },
+        "tokens": []
+      }
+    ]
+  },
+  "error": null,
+  "id": 2
+}
