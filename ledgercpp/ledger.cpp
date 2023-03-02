@@ -69,11 +69,11 @@ namespace ledger
 		if (data[offset] == 0xfe)
 		{
 			return {
-					(data[offset + 4] << 24) +
-							(data[offset + 3] << 16) +
-							(data[offset + 2] << 8) +
-							data[offset + 1],
-					5,
+				(data[offset + 4] << 24) +
+					(data[offset + 3] << 16) +
+					(data[offset + 2] << 8) +
+					data[offset + 1],
+				5,
 			};
 		}
 	}
@@ -111,8 +111,7 @@ namespace ledger
 
 		auto offset = 0;
 
-		auto wtf = utils::splice(transaction, offset, 1);
-		tx.version = utils::bytes_to_int(wtf);
+		tx.version = utils::bytes_to_int(utils::splice(transaction, offset, 1));
 		offset += 4;
 
 		tx.time = utils::bytes_to_int(utils::splice(transaction, offset, 4));
@@ -167,11 +166,6 @@ namespace ledger
 
 	std::tuple<Error, std::vector<uint8_t>> Ledger::GetTrustedInputRaw(bool firstRound, uint32_t indexLookup, const std::vector<uint8_t> &transactionData)
 	{
-		// std::vector<uint8_t> data;
-		// if (firstRound)
-		// {
-		// }
-
 		auto result = transport_->exchange(APDU::CLA, APDU::INS_GET_TRUSTED_INPUT, firstRound ? 0x00 : 0x80, 0x00, transactionData);
 		auto err = std::get<0>(result);
 		auto buffer = std::get<1>(result);
@@ -179,46 +173,6 @@ namespace ledger
 			return {err, {}};
 
 		return {err, std::vector<uint8_t>(buffer.begin(), buffer.end())};
-	}
-
-	std::tuple<Error, std::vector<uint8_t>> Ledger::ProcessScriptBlocks(const std::vector<uint8_t> &script, uint32_t sequence)
-	{
-		auto MAX_SCRIPT_BLOCK = 50;
-
-		std::vector<std::vector<uint8_t>> scriptBlocks;
-		auto offset = 0;
-
-		while (offset != script.size())
-		{
-			auto blockSize = script.size() - offset > MAX_SCRIPT_BLOCK ? MAX_SCRIPT_BLOCK : script.size() - offset;
-
-			if ((offset + blockSize) != script.size())
-			{
-				scriptBlocks.push_back(utils::splice(script, offset, blockSize));
-			}
-			else
-			{
-				auto block = utils::splice(script, offset, blockSize);
-				utils::append_uint32(block, sequence);
-
-				scriptBlocks.push_back(block);
-			}
-
-			offset += blockSize;
-		}
-
-		std::vector<uint8_t> finalResults;
-		for (auto &scriptBlock : scriptBlocks)
-		{
-			auto result = GetTrustedInputRaw(false, 0, scriptBlock);
-			if (std::get<0>(result) != Error::SUCCESS)
-			{
-				return {std::get<0>(result), {}};
-			}
-			finalResults = std::get<1>(result);
-		}
-
-		return {Error::SUCCESS, finalResults};
 	}
 
 	std::tuple<Error, std::vector<uint8_t>> Ledger::GetTrustedInput(uint32_t indexLookup, Tx tx)
@@ -284,64 +238,6 @@ namespace ledger
 		}
 
 		return {Error::SUCCESS, finalResults};
-	}
-
-	std::tuple<Error, std::vector<uint8_t>> Ledger::_NOT_WORKING_GetTrustedInput_NOT_WORKING_(uint32_t indexLookup, const std::vector<uint8_t> &transaction)
-	{
-		auto tx = SplitTransaction(transaction);
-
-		std::vector<uint8_t> data;
-		utils::append_uint32(data, tx.version);
-		utils::append_uint32(data, tx.time);
-		utils::append_vector(data, CreateVarint(tx.inputs.size()));
-
-		auto result = GetTrustedInputRaw(true, indexLookup, data);
-		if (std::get<0>(result) != Error::SUCCESS)
-		{
-			return {std::get<0>(result), {}};
-		}
-
-		for (auto input : tx.inputs)
-		{
-			std::vector<uint8_t> inputData;
-			utils::append_vector(inputData, input.prevout);
-			utils::append_vector(inputData, CreateVarint(input.script.size()));
-
-			result = GetTrustedInputRaw(false, 0, inputData);
-			if (std::get<0>(result) != Error::SUCCESS)
-			{
-				return {std::get<0>(result), {}};
-			}
-
-			auto result = ProcessScriptBlocks(input.script, input.sequence);
-			if (std::get<0>(result) != Error::SUCCESS)
-			{
-				return result;
-			}
-		}
-
-		result = GetTrustedInputRaw(false, 0, CreateVarint(tx.outputs.size()));
-		if (std::get<0>(result) != Error::SUCCESS)
-		{
-			return {std::get<0>(result), {}};
-		}
-
-		for (auto output : tx.outputs)
-		{
-			std::vector<uint8_t> outputData;
-			utils::append_uint64(outputData, output.amount, false);
-			utils::append_vector(outputData, CreateVarint(output.script.size()));
-			utils::append_vector(outputData, output.script);
-
-			result = GetTrustedInputRaw(false, 0, outputData);
-			if (std::get<0>(result) != Error::SUCCESS)
-			{
-				return {std::get<0>(result), {}};
-			}
-		}
-
-		auto locktimeBytes = utils::int_to_bytes(tx.locktime, 4);
-		return GetTrustedInputRaw(false, 0, locktimeBytes);
 	}
 
 	void Ledger::SignTransaction()
