@@ -3,9 +3,22 @@
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
+#include <string>
 
 namespace ledger::utils
 {
+	std::string BytesToHex(std::vector<uint8_t> vec)
+	{
+		std::stringstream ss;
+		for (int i = 0; i < vec.size(); i++)
+		{
+			ss << std::hex << std::setfill('0') << std::setw(2) << (int)vec[i];
+		}
+
+		return ss.str();
+	}
+
 	void printHex(std::vector<uint8_t> vec)
 	{
 		for (int i = 0; i < vec.size(); i++)
@@ -14,6 +27,26 @@ namespace ledger::utils
 		}
 
 		std::cout << std::dec << std::endl;
+	}
+
+	std::vector<uint8_t> HexToBytes(const std::string &data)
+	{
+		std::stringstream ss;
+		ss << data;
+
+		std::vector<uint8_t> resBytes;
+		size_t count = 0;
+		const auto len = data.size();
+		while (ss.good() && count < len)
+		{
+			unsigned short num;
+			char hexNum[2];
+			ss.read(hexNum, 2);
+			sscanf(hexNum, "%2hX", &num);
+			resBytes.push_back(num);
+			count += 2;
+		}
+		return resBytes;
 	}
 
 	uint64_t bytes_to_uint64(const std::vector<uint8_t> &bytes)
@@ -26,10 +59,16 @@ namespace ledger::utils
 		return value;
 	}
 
-	int bytes_to_int(const std::vector<uint8_t> &bytes)
+	int bytes_to_int(const std::vector<uint8_t> &bytes, bool littleEndian)
 	{
+		auto bytesToConvert = bytes;
+		if (littleEndian)
+		{
+			bytesToConvert = std::vector<uint8_t>(bytesToConvert.rbegin(), bytesToConvert.rend());
+		}
+
 		int value = 0;
-		for (const uint8_t &byte : bytes)
+		for (const uint8_t &byte : bytesToConvert)
 		{
 			value = (value << 8) + byte;
 		}
@@ -91,5 +130,69 @@ namespace ledger::utils
 		copy(vec.begin() + start, vec.begin() + start + length, result.begin());
 
 		return result;
+	}
+
+	std::vector<uint8_t> compressPubKey(std::vector<uint8_t> pubKey)
+	{
+		if (pubKey.size() != 65)
+		{
+			throw std::runtime_error("Invalid public key length");
+		}
+
+		if (pubKey[0] != 0x04)
+		{
+			throw std::runtime_error("Invalid public key format");
+		}
+
+		std::vector<uint8_t> compressedPubKey(33);
+		compressedPubKey[0] = pubKey[64] & 1 ? 0x03 : 0x02;
+		copy(pubKey.begin() + 1, pubKey.begin() + 33, compressedPubKey.begin() + 1);
+
+		return compressedPubKey;
+	}
+
+	// copied from https://github.com/bitcoin/bitcoin/blob/master/src/util/bip32.cpp#L13
+	// and adjusted for uint8_t instead of uint32_t vector
+	bool ParseHDKeypath(const std::string &keypath_str, std::vector<uint8_t> &keypath)
+	{
+		std::stringstream ss(keypath_str);
+		std::string item;
+		bool first = true;
+		while (std::getline(ss, item, '/'))
+		{
+			if (item.compare("m") == 0)
+			{
+				if (first)
+				{
+					first = false;
+					continue;
+				}
+				return false;
+			}
+			// Finds whether it is hardened
+			uint32_t path = 0;
+			size_t pos = item.find("'");
+			if (pos != std::string::npos)
+			{
+				// The hardened tick can only be in the last index of the string
+				if (pos != item.size() - 1)
+				{
+					return false;
+				}
+				path |= 0x80000000;
+				item = item.substr(0, item.size() - 1); // Drop the last character which is the hardened tick
+			}
+
+			// Ensure this is only numbers
+			if (item.find_first_not_of("0123456789") != std::string::npos)
+			{
+				return false;
+			}
+
+			utils::append_uint32(keypath, std::stoul(item) | path);
+
+			first = false;
+		}
+		return true;
 	}
 } // namespace ledger::utils
