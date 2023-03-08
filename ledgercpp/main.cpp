@@ -22,7 +22,7 @@ int getPublicKey()
 
   std::cout << "Getting public key - please confirm action on Ledger" << std::endl;
 
-  auto result = ledger.get_public_key(0, true);
+  auto result = ledger.GetPublicKey("m/44'/146'/0'", true);
   auto pubKey = std::get<0>(result);
   auto addressVec = std::get<1>(result);
   auto chainCode = std::get<2>(result);
@@ -114,6 +114,6 @@ int main(int argc, char *argv[])
   }
   else
   {
-    signTransaction();
+    getPublicKey();
   }
 }

@@ -2,7 +2,7 @@
 #include "error.h"
 #include "hash.h"
 #include "utils.h"
-#include "base58_2.h"
+#include "base58.h"
 
 #include <algorithm>
 #include <iostream>
@@ -24,17 +24,15 @@ namespace ledger
 		std::cout << "Ledger connection opened." << std::endl;
 	}
 
-	std::tuple<std::vector<uint8_t>, std::string, std::vector<uint8_t>> Ledger::get_public_key(uint32_t account, bool confirm)
+	std::tuple<std::vector<uint8_t>, std::string, std::vector<uint8_t>> Ledger::GetPublicKey(std::string path, bool confirm)
 	{
 		auto payload = std::vector<uint8_t>();
 		// path length
 		payload.push_back(5);
-		// m/44'/146'/0'/0/0 derivation path
-		utils::append_vector(payload, utils::int_to_bytes(utils::hardened(84), 4));
-		utils::append_vector(payload, utils::int_to_bytes(utils::hardened(1), 4));
-		utils::append_vector(payload, utils::int_to_bytes(utils::hardened(account), 4));
-		utils::append_vector(payload, utils::int_to_bytes(0, 4));
-		utils::append_vector(payload, utils::int_to_bytes(0, 4));
+
+		auto pathBytes = utils::ParseHDKeypath(path);
+
+		utils::append_vector(payload, pathBytes);
 
 		auto result = transport_->exchange(APDU::CLA, APDU::INS_GET_PUBLIC_KEY, confirm, 0x02, payload);
 		auto err = std::get<0>(result);
@@ -345,8 +343,7 @@ namespace ledger
 		auto p1 = 0xFF;
 		if (changePath.length() > 0)
 		{
-			std::vector<uint8_t> serializedChangePath;
-			utils::ParseHDKeypath(changePath, serializedChangePath);
+			auto serializedChangePath = utils::ParseHDKeypath(changePath);
 
 			std::vector<uint8_t> changePathData;
 			changePathData.push_back(serializedChangePath.size() / 4);
@@ -452,8 +449,10 @@ namespace ledger
 		tx.locktime = locktime;
 
 		std::vector<TrustedInput> trustedInputs;
-		for (const auto &rawUtxo : rawUtxos)
+		for (auto i = 0; i < rawUtxos.size(); i++)
 		{
+			const auto &rawUtxo = rawUtxos[i];
+
 			auto utxoTx = SplitTransaction(std::get<0>(rawUtxo));
 
 			const auto serializedTrustedInputResult = GetTrustedInput(std::get<1>(rawUtxo), utxoTx);
@@ -465,7 +464,7 @@ namespace ledger
 			auto scriptPubKey = utxoTx.outputs[std::get<1>(rawUtxo)].script;
 			utils::printHex(scriptPubKey);
 
-			auto publicKeyResult = get_public_key(0, false);
+			auto publicKeyResult = GetPublicKey(signPaths[i], false);
 			auto publicKey = utils::compressPubKey(std::get<0>(publicKeyResult));
 			std::cout << "compressed keyd:";
 			utils::printHex(publicKey);
@@ -572,8 +571,7 @@ namespace ledger
 			auto p1 = 0x00;
 			auto p2 = 0x00;
 
-			std::vector<uint8_t> serializedChangePath;
-			utils::ParseHDKeypath(signPaths[i], serializedChangePath);
+			auto serializedChangePath = utils::ParseHDKeypath(signPaths[i]);
 
 			std::vector<uint8_t> data;
 			data.push_back(serializedChangePath.size() / 4);

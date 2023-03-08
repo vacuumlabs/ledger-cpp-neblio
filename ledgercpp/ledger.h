@@ -72,7 +72,7 @@ namespace ledger
 
 		Error open();
 
-		std::tuple<std::vector<uint8_t>, std::string, std::vector<uint8_t>> get_public_key(uint32_t account, bool confirm = false);
+		std::tuple<std::vector<uint8_t>, std::string, std::vector<uint8_t>> GetPublicKey(std::string path, bool confirm);
 		std::tuple<Error, std::vector<uint8_t>> sign(uint32_t account, const std::vector<uint8_t> &msg);
 
 		void close();

@@ -25,7 +25,7 @@ namespace ledger::utils
 	uint32_t hardened(uint32_t n);
 	std::vector<uint8_t> splice(std::vector<uint8_t> vec, int start, int length);
 	std::vector<uint8_t> compressPubKey(std::vector<uint8_t> pubKey);
-	bool ParseHDKeypath(const std::string &keypath_str, std::vector<uint8_t> &keypath);
+	std::vector<uint8_t> ParseHDKeypath(const std::string &keypath_str);
 } // namespace ledger::utils
 
 #endif

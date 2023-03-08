@@ -153,8 +153,9 @@ namespace ledger::utils
 
 	// copied from https://github.com/bitcoin/bitcoin/blob/master/src/util/bip32.cpp#L13
 	// and adjusted for uint8_t instead of uint32_t vector
-	bool ParseHDKeypath(const std::string &keypath_str, std::vector<uint8_t> &keypath)
+	std::vector<uint8_t> ParseHDKeypath(const std::string &keypath_str)
 	{
+		std::vector<uint8_t> keypath;
 		std::stringstream ss(keypath_str);
 		std::string item;
 		bool first = true;
@@ -167,7 +168,7 @@ namespace ledger::utils
 					first = false;
 					continue;
 				}
-				return false;
+				throw std::runtime_error("Invalid keypath");
 			}
 			// Finds whether it is hardened
 			uint32_t path = 0;
@@ -177,7 +178,7 @@ namespace ledger::utils
 				// The hardened tick can only be in the last index of the string
 				if (pos != item.size() - 1)
 				{
-					return false;
+					throw std::runtime_error("Invalid keypath");
 				}
 				path |= 0x80000000;
 				item = item.substr(0, item.size() - 1); // Drop the last character which is the hardened tick
@@ -186,13 +187,13 @@ namespace ledger::utils
 			// Ensure this is only numbers
 			if (item.find_first_not_of("0123456789") != std::string::npos)
 			{
-				return false;
+				throw std::runtime_error("Invalid keypath");
 			}
 
 			utils::append_uint32(keypath, std::stoul(item) | path);
 
 			first = false;
 		}
-		return true;
+		return keypath;
 	}
 } // namespace ledger::utils
