@@ -12,7 +12,7 @@ namespace ledger::utils
 	std::string BytesToHex(const bytes &vec);
 	void PrintHex(const bytes &vec);
 	bytes HexToBytes(const std::string &data);
-	uint64_t BytesToUint64(const bytes &bytes);
+	uint64_t BytesToUint64(const bytes &bytes, bool littleEndian = false);
 	int BytesToInt(const bytes &bytes, bool littleEndian = false);
 	bytes IntToBytes(unsigned int n, unsigned int length, bool littleEndian = false);
 	bytes Uint64ToBytes(uint64_t n, unsigned int length, bool littleEndian = false);

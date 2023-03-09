@@ -49,10 +49,16 @@ namespace ledger::utils
 		return resBytes;
 	}
 
-	uint64_t BytesToUint64(const bytes &_bytes)
+	uint64_t BytesToUint64(const bytes &_bytes, bool littleEndian)
 	{
+		auto bytesToConvert = _bytes;
+		if (littleEndian)
+		{
+			bytesToConvert = bytes(bytesToConvert.rbegin(), bytesToConvert.rend());
+		}
+
 		uint64_t value = 0;
-		for (const uint8_t &byte : _bytes)
+		for (const uint8_t &byte : bytesToConvert)
 		{
 			value = (value << 8) + byte;
 		}

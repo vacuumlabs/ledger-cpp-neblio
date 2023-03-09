@@ -174,7 +174,7 @@ namespace ledger
 		{
 			TxOutput output;
 
-			output.amount = utils::BytesToUint64(utils::Splice(transaction, offset, 8));
+			output.amount = utils::BytesToUint64(utils::Splice(transaction, offset, 8), true);
 			offset += 8;
 
 			varint = GetVarint(transaction, offset);
@@ -243,7 +243,7 @@ namespace ledger
 		utils::AppendVector(serializedTransaction, CreateVarint(tx.outputs.size()));
 		for (auto output : tx.outputs)
 		{
-			utils::AppendUint64(serializedTransaction, output.amount);
+			utils::AppendUint64(serializedTransaction, output.amount, true);
 			utils::AppendVector(serializedTransaction, CreateVarint(output.script.size()));
 			utils::AppendVector(serializedTransaction, output.script);
 		}
