@@ -70,7 +70,7 @@ namespace ledger
 		return {err, bytes(buffer.begin() + 1, buffer.end())};
 	}
 
-	Tx Ledger::SplitTransaction(const bytes &transaction)
+	Tx Ledger::DeserializeTransaction(const bytes &transaction)
 	{
 		Tx tx;
 		tx.inputs = std::vector<TxInput>();
@@ -396,7 +396,7 @@ namespace ledger
 			utxo.raw = std::get<0>(rawUtxo);
 			utxo.index = std::get<1>(rawUtxo);
 
-			auto utxoTx = SplitTransaction(utxo.raw);
+			auto utxoTx = DeserializeTransaction(utxo.raw);
 			utxo.tx = utxoTx;
 
 			utxos.push_back(utxo);

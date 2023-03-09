@@ -97,6 +97,6 @@ namespace ledger
 		std::vector<std::tuple<int, bytes>> SignTransaction(const std::string &address, uint64_t amount, uint64_t fees, const std::string &changePath, const std::vector<std::string> &signPaths, const std::vector<std::tuple<bytes, uint32_t>> &rawUtxos, uint32_t locktime);
 		std::tuple<Error, bytes> GetTrustedInput(uint32_t indexLookup, Tx tx);
 		TrustedInput DeserializeTrustedInput(const bytes &serializedTrustedInput);
-		Tx SplitTransaction(const bytes &transaction);
+		Tx DeserializeTransaction(const bytes &transaction);
 	};
 }

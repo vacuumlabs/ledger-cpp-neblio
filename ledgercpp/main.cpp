@@ -64,7 +64,7 @@ int getTrustedInputFromDeserializedTx()
   ledger.open();
 
   auto serializedTransaction = utils::HexToBytes(NEBLIO_TX_FROM_RPC);
-  auto tx = ledger.SplitTransaction(serializedTransaction);
+  auto tx = ledger.DeserializeTransaction(serializedTransaction);
 
   auto result = ledger.GetTrustedInput(0, tx);
   auto resultError = std::get<0>(result);
