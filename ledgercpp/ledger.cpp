@@ -411,9 +411,6 @@ namespace ledger
 			utils::AppendVector(_data, trustedInput.serialized);
 			utils::AppendVector(_data, CreateVarint(_script.size()));
 
-			utils::PrintHex(trustedInput.serialized);
-			utils::PrintHex(_data);
-
 			auto result = transport_->exchange(APDU::CLA, ins, p1, p2, _data);
 			auto err = std::get<0>(result);
 			auto buffer = std::get<1>(result);
@@ -561,8 +558,6 @@ namespace ledger
 			auto buffer = std::get<1>(result);
 			if (err != Error::SUCCESS)
 				throw err;
-
-			utils::PrintHex(buffer);
 
 			if (buffer[0] & 0x01)
 			{

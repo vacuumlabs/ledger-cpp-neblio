@@ -50,8 +50,6 @@ namespace ledger
 		auto header = apdu_header(cla, ins, p1, p2, cdata.size());
 		header.insert(header.end(), cdata.begin(), cdata.end());
 
-		utils::PrintHex(header);
-
 		return comm_->send(header);
 	}
 
