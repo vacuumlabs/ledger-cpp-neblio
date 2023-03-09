@@ -53,6 +53,13 @@ namespace ledger
 		bytes hmac;
 	};
 
+	struct Utxo
+	{
+		bytes raw;
+		uint32_t index;
+		Tx tx;
+	};
+
 	class Ledger
 	{
 		enum APDU : uint8_t

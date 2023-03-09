@@ -434,21 +434,36 @@ namespace ledger
 
 	std::vector<std::tuple<int, bytes>> Ledger::SignTransaction(const std::string &address, uint64_t amount, uint64_t fees, const std::string &changePath, const std::vector<std::string> &signPaths, const std::vector<std::tuple<bytes, uint32_t>> &rawUtxos, uint32_t locktime)
 	{
-		// TODO GK - check amount available?
-
 		Tx tx;
 		tx.version = 2;
 		tx.time = 0;
 		tx.locktime = locktime;
 
-		std::vector<TrustedInput> trustedInputs;
-		for (auto i = 0; i < rawUtxos.size(); i++)
+		// build UTxOs and count amount available
+		std::vector<Utxo> utxos;
+		uint64_t amountAvailable = 0;
+		for (const auto &rawUtxo : rawUtxos)
 		{
-			const auto &rawUtxo = rawUtxos[i];
+			Utxo utxo;
+			utxo.raw = std::get<0>(rawUtxo);
+			utxo.index = std::get<1>(rawUtxo);
 
-			auto utxoTx = SplitTransaction(std::get<0>(rawUtxo));
+			auto utxoTx = SplitTransaction(utxo.raw);
+			utxo.tx = utxoTx;
 
-			const auto serializedTrustedInputResult = GetTrustedInput(std::get<1>(rawUtxo), utxoTx);
+			utxos.push_back(utxo);
+
+			auto amount = utxoTx.outputs[utxo.index].amount;
+			amountAvailable += amount;
+		}
+
+		// get trusted inputs
+		std::vector<TrustedInput> trustedInputs;
+		for (auto i = 0; i < utxos.size(); i++)
+		{
+			const auto &utxo = utxos[i];
+
+			const auto serializedTrustedInputResult = GetTrustedInput(utxo.index, utxo.tx);
 			auto trustedInput = DeserializeTrustedInput(std::get<1>(serializedTrustedInputResult));
 
 			TxInput txInput;
@@ -475,42 +490,21 @@ namespace ledger
 			tx.inputs.push_back(txInput);
 		}
 
-		// TODO GK - if has change
-		if (false)
+		// create change output
+		if (amountAvailable - fees > amount)
 		{
-			// skip getting pub key for testing purposes
-			// TODO GK - change path
-			// auto publicKeyResult = get_public_key(0, false);
-			// auto publicKey = std::get<0>(publicKeyResult);
-			// utils::printHex(publicKey);
-
-			auto publicKey = utils::HexToBytes("0472a26b18ad78c0dbb966c2fb3abcd2427bd6ce452955732f5f177d7a251cfe63cedd9f63cdc13fde7df3853dd9040914ac31e000e9e136fff642ae8f98428559");
-			auto compressedPubKey = utils::CompressPubKey(publicKey);
-			auto publicKeyHash = Hash160(compressedPubKey);
-
-			// TODO GK - extract into function and refactor
-			// PUB KEY TO ADDRESS
-			// auto publicKeyHashVec = bytes(publicKeyHash.begin(), publicKeyHash.end());
-			// bytes pubKeyWithBase58Prefix;
-			// pubKeyWithBase58Prefix.push_back(0x41);
-			// utils::append_vector(pubKeyWithBase58Prefix, publicKeyHashVec);
-			// auto checksum = Hash(pubKeyWithBase58Prefix.begin(), pubKeyWithBase58Prefix.end());
-			// auto checksumVec = bytes(checksum.begin(), checksum.begin() + 4);
-			// utils::append_vector(pubKeyWithBase58Prefix, checksumVec);
-			// auto address = utils::base58_encode(pubKeyWithBase58Prefix);
+			auto publicKeyResult = GetPublicKey(changePath, false);
+			auto publicKey = utils::CompressPubKey(std::get<0>(publicKeyResult));
+			auto publicKeyHash = Hash160(publicKey);
 
 			// TODO GK - other key structures?
 			bytes changeScriptPublicKey;
-			// changeScriptPublicKey.push_back(0x76);
-			// changeScriptPublicKey.push_back(0xa9);
-			// changeScriptPublicKey.push_back(0x14);
-			// utils::append_vector(changeScriptPublicKey, bytes(publicKeyHash.begin(), publicKeyHash.end()));
-			// changeScriptPublicKey.push_back(0x88);
-			// changeScriptPublicKey.push_back(0xac);
+			changeScriptPublicKey.push_back(0x76);
 			changeScriptPublicKey.push_back(0xa9);
 			changeScriptPublicKey.push_back(0x14);
 			utils::AppendVector(changeScriptPublicKey, bytes(publicKeyHash.begin(), publicKeyHash.end()));
-			changeScriptPublicKey.push_back(0x87);
+			changeScriptPublicKey.push_back(0x88);
+			changeScriptPublicKey.push_back(0xac);
 
 			TxOutput txChangeOutput;
 			// TODO GK - fix amount
@@ -519,13 +513,8 @@ namespace ledger
 			tx.outputs.push_back(txChangeOutput);
 		}
 
-		// TODO GK - other address types?
-		// bytes scriptPublicKey;
-		// scriptPublicKey.push_back(0xa9);
-		// scriptPublicKey.push_back(0x14);
-		// auto addressDecoded = Base58Decode(address);
-		// utils::append_vector(scriptPublicKey, bytes(addressDecoded.begin() + 1, addressDecoded.end() - 4));
-		// scriptPublicKey.push_back(0x87);
+		// create output to address
+		// TODO GK - other key structures?
 		bytes scriptPublicKey;
 		scriptPublicKey.push_back(0x76);
 		scriptPublicKey.push_back(0xa9);
