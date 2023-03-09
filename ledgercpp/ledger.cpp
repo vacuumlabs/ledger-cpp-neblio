@@ -70,55 +70,6 @@ namespace ledger
 		return {err, bytes(buffer.begin() + 1, buffer.end())};
 	}
 
-	std::tuple<uint32_t, uint8_t> Ledger::GetVarint(const bytes &data, uint32_t offset)
-	{
-		if (data[offset] < 0xfd)
-		{
-			return {data[offset], 1};
-		}
-
-		if (data[offset] == 0xfd)
-		{
-			return {(data[offset + 2] << 8) + data[offset + 1], 3};
-		}
-
-		if (data[offset] == 0xfe)
-		{
-			return {
-				(data[offset + 4] << 24) +
-					(data[offset + 3] << 16) +
-					(data[offset + 2] << 8) +
-					data[offset + 1],
-				5,
-			};
-		}
-	}
-
-	bytes Ledger::CreateVarint(uint32_t value)
-	{
-		bytes data;
-		if (value < 0xfd)
-		{
-			data.push_back(value);
-		}
-		else if (value <= 0xffff)
-		{
-			data.push_back(0xfd);
-			data.push_back(value & 0xff);
-			data.push_back((value >> 8) & 0xff);
-		}
-		else
-		{
-			data.push_back(0xfd);
-			data.push_back(value & 0xff);
-			data.push_back((value >> 8) & 0xff);
-			data.push_back((value >> 16) & 0xff);
-			data.push_back((value >> 24) & 0xff);
-		}
-
-		return data;
-	}
-
 	Tx Ledger::SplitTransaction(const bytes &transaction)
 	{
 		Tx tx;
@@ -133,7 +84,7 @@ namespace ledger
 		tx.time = utils::BytesToInt(utils::Splice(transaction, offset, 4), true);
 		offset += 4;
 
-		auto varint = GetVarint(transaction, offset);
+		auto varint = utils::DeserializeVarint(transaction, offset);
 		auto inputsCount = std::get<0>(varint);
 		offset += std::get<1>(varint);
 
@@ -143,7 +94,7 @@ namespace ledger
 			flags = utils::BytesToInt(utils::Splice(transaction, offset, 1));
 			offset += 1;
 
-			varint = GetVarint(transaction, offset);
+			varint = utils::DeserializeVarint(transaction, offset);
 			inputsCount = std::get<0>(varint);
 			offset += std::get<1>(varint);
 		}
@@ -155,7 +106,7 @@ namespace ledger
 			input.prevout = utils::Splice(transaction, offset, 36);
 			offset += 36;
 
-			varint = GetVarint(transaction, offset);
+			varint = utils::DeserializeVarint(transaction, offset);
 			offset += std::get<1>(varint);
 			input.script = utils::Splice(transaction, offset, std::get<0>(varint));
 
@@ -166,7 +117,7 @@ namespace ledger
 			tx.inputs.push_back(input);
 		}
 
-		varint = GetVarint(transaction, offset);
+		varint = utils::DeserializeVarint(transaction, offset);
 		auto numberOutputs = std::get<0>(varint);
 		offset += std::get<1>(varint);
 
@@ -177,7 +128,7 @@ namespace ledger
 			output.amount = utils::BytesToUint64(utils::Splice(transaction, offset, 8), true);
 			offset += 8;
 
-			varint = GetVarint(transaction, offset);
+			varint = utils::DeserializeVarint(transaction, offset);
 			offset += std::get<1>(varint);
 
 			output.script = utils::Splice(transaction, offset, std::get<0>(varint));
@@ -191,14 +142,14 @@ namespace ledger
 			TxWitness txWitness;
 			for (auto i = 0; i < inputsCount; i++)
 			{
-				auto numberOfWitnesses = GetVarint(transaction, offset);
+				auto numberOfWitnesses = utils::DeserializeVarint(transaction, offset);
 				offset += std::get<1>(numberOfWitnesses);
 
 				TxInWitness txInWitness;
 				ScriptWitness scriptWitness;
 				for (auto j = 0; j < std::get<0>(numberOfWitnesses); j++)
 				{
-					auto scriptWitnessSize = GetVarint(transaction, offset);
+					auto scriptWitnessSize = utils::DeserializeVarint(transaction, offset);
 					offset += std::get<1>(scriptWitnessSize);
 					scriptWitness.stack.push_back(bytes(transaction.begin() + offset, transaction.begin() + offset + std::get<0>(scriptWitnessSize)));
 					offset += std::get<0>(scriptWitnessSize);
@@ -231,20 +182,20 @@ namespace ledger
 		utils::AppendUint32(serializedTransaction, tx.version, true);
 		utils::AppendUint32(serializedTransaction, tx.time, true);
 
-		utils::AppendVector(serializedTransaction, CreateVarint(tx.inputs.size()));
+		utils::AppendVector(serializedTransaction, utils::CreateVarint(tx.inputs.size()));
 		for (auto input : tx.inputs)
 		{
 			utils::AppendVector(serializedTransaction, input.prevout);
-			utils::AppendVector(serializedTransaction, CreateVarint(input.script.size()));
+			utils::AppendVector(serializedTransaction, utils::CreateVarint(input.script.size()));
 			utils::AppendVector(serializedTransaction, input.script);
 			utils::AppendUint32(serializedTransaction, input.sequence);
 		}
 
-		utils::AppendVector(serializedTransaction, CreateVarint(tx.outputs.size()));
+		utils::AppendVector(serializedTransaction, utils::CreateVarint(tx.outputs.size()));
 		for (auto output : tx.outputs)
 		{
 			utils::AppendUint64(serializedTransaction, output.amount, true);
-			utils::AppendVector(serializedTransaction, CreateVarint(output.script.size()));
+			utils::AppendVector(serializedTransaction, utils::CreateVarint(output.script.size()));
 			utils::AppendVector(serializedTransaction, output.script);
 		}
 
@@ -358,7 +309,7 @@ namespace ledger
 		}
 
 		p1 = 0x00;
-		auto result = transport_->exchange(APDU::CLA, ins, p1, p2, CreateVarint(tx.outputs.size()));
+		auto result = transport_->exchange(APDU::CLA, ins, p1, p2, utils::CreateVarint(tx.outputs.size()));
 		auto err = std::get<0>(result);
 		auto buffer = std::get<1>(result);
 		if (err != Error::SUCCESS)
@@ -371,7 +322,7 @@ namespace ledger
 			auto output = tx.outputs[i];
 			bytes outputData;
 			utils::AppendUint64(outputData, output.amount, true);
-			utils::AppendVector(outputData, CreateVarint(output.script.size()));
+			utils::AppendVector(outputData, utils::CreateVarint(output.script.size()));
 			utils::AppendVector(outputData, output.script);
 
 			auto result = transport_->exchange(APDU::CLA, ins, p1, p2, outputData);
@@ -391,7 +342,7 @@ namespace ledger
 		bytes data;
 		utils::AppendUint32(data, tx.version, true);
 		utils::AppendUint32(data, tx.time, true);
-		utils::AppendVector(data, CreateVarint(trustedInputs.size()));
+		utils::AppendVector(data, utils::CreateVarint(trustedInputs.size()));
 
 		auto result = transport_->exchange(APDU::CLA, ins, p1, p2, data);
 		auto err = std::get<0>(result);
@@ -409,7 +360,7 @@ namespace ledger
 			_data.push_back(0x01);
 			_data.push_back(trustedInput.serialized.size());
 			utils::AppendVector(_data, trustedInput.serialized);
-			utils::AppendVector(_data, CreateVarint(_script.size()));
+			utils::AppendVector(_data, utils::CreateVarint(_script.size()));
 
 			auto result = transport_->exchange(APDU::CLA, ins, p1, p2, _data);
 			auto err = std::get<0>(result);

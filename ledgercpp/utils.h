@@ -9,6 +9,8 @@
 
 namespace ledger::utils
 {
+	std::tuple<uint32_t, uint8_t> DeserializeVarint(const bytes &data, uint32_t offset);
+	bytes CreateVarint(uint32_t value);
 	std::string BytesToHex(const bytes &vec);
 	void PrintHex(const bytes &vec);
 	bytes HexToBytes(const std::string &data);

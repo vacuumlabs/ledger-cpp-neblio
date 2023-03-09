@@ -8,6 +8,55 @@
 
 namespace ledger::utils
 {
+	std::tuple<uint32_t, uint8_t> DeserializeVarint(const bytes &data, uint32_t offset)
+	{
+		if (data[offset] < 0xfd)
+		{
+			return {data[offset], 1};
+		}
+
+		if (data[offset] == 0xfd)
+		{
+			return {(data[offset + 2] << 8) + data[offset + 1], 3};
+		}
+
+		if (data[offset] == 0xfe)
+		{
+			return {
+				(data[offset + 4] << 24) +
+					(data[offset + 3] << 16) +
+					(data[offset + 2] << 8) +
+					data[offset + 1],
+				5,
+			};
+		}
+	}
+
+	bytes CreateVarint(uint32_t value)
+	{
+		bytes data;
+		if (value < 0xfd)
+		{
+			data.push_back(value);
+		}
+		else if (value <= 0xffff)
+		{
+			data.push_back(0xfd);
+			data.push_back(value & 0xff);
+			data.push_back((value >> 8) & 0xff);
+		}
+		else
+		{
+			data.push_back(0xfd);
+			data.push_back(value & 0xff);
+			data.push_back((value >> 8) & 0xff);
+			data.push_back((value >> 16) & 0xff);
+			data.push_back((value >> 24) & 0xff);
+		}
+
+		return data;
+	}
+
 	std::string BytesToHex(const bytes &vec)
 	{
 		std::stringstream ss;
