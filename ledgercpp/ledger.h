@@ -73,7 +73,7 @@ namespace ledger
 
 		Error open();
 
-		std::tuple<bytes, std::string, bytes> GetPublicKey(std::string path, bool confirm);
+		std::tuple<bytes, std::string, bytes> GetPublicKey(const std::string &path, bool confirm);
 		std::tuple<Error, bytes> sign(uint32_t account, const bytes &msg);
 
 		void close();
@@ -85,14 +85,14 @@ namespace ledger
 		std::tuple<Error, bytes> GetTrustedInputRaw(bool firstRound, uint32_t indexLookup, const bytes &data);
 		std::tuple<Error, bytes> _NOT_WORKING_GetTrustedInput_NOT_WORKING_(uint32_t indexLookup, const bytes &transaction);
 		std::tuple<Error, bytes> GetTrustedInput(uint32_t indexLookup, const bytes &serializedTransaction);
-		void UntrustedHashTxInputFinalize(Tx tx, std::string changePath);
-		void UntrustedHashTxInputStart(Tx tx, std::vector<TrustedInput> trustedInputs, int inputIndex, bytes script, bool isNewTransaction);
-		std::vector<std::tuple<int, bytes>> SignTransaction(std::string address, uint64_t amount, uint64_t fees, std::string changePath, std::vector<std::string> signPaths, std::vector<std::tuple<bytes, uint32_t>> rawUtxos, uint32_t locktime);
+		void UntrustedHashTxInputFinalize(Tx tx, const std::string &changePath);
+		void UntrustedHashTxInputStart(Tx tx, const std::vector<TrustedInput> &trustedInputs, int inputIndex, bytes script, bool isNewTransaction);
+		std::vector<std::tuple<int, bytes>> SignTransaction(const std::string &address, uint64_t amount, uint64_t fees, const std::string &changePath, const std::vector<std::string> &signPaths, const std::vector<std::tuple<bytes, uint32_t>> &rawUtxos, uint32_t locktime);
 		std::tuple<Error, bytes> GetTrustedInput(uint32_t indexLookup, Tx tx);
 		TrustedInput DeserializeTrustedInput(const bytes &serializedTrustedInput);
 
 		std::tuple<uint32_t, uint8_t> GetVarint(const bytes &data, uint32_t offset);
 		bytes CreateVarint(uint32_t value);
-		Tx SplitTransaction(bytes transaction);
+		Tx SplitTransaction(const bytes &transaction);
 	};
 }

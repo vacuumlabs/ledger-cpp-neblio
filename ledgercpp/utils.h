@@ -9,22 +9,22 @@
 
 namespace ledger::utils
 {
-	std::string BytesToHex(bytes vec);
-	void PrintHex(bytes vec);
+	std::string BytesToHex(const bytes &vec);
+	void PrintHex(const bytes &vec);
 	bytes HexToBytes(const std::string &data);
 	uint64_t BytesToUint64(const bytes &bytes);
 	int BytesToInt(const bytes &bytes, bool littleEndian = false);
 	bytes IntToBytes(unsigned int n, unsigned int length, bool littleEndian = false);
 	bytes Uint64ToBytes(uint64_t n, unsigned int length, bool littleEndian = false);
 	template <typename T>
-	void AppendVector(std::vector<T> &destination, std::vector<T> source)
+	void AppendVector(std::vector<T> &destination, const std::vector<T> &source)
 	{
 		destination.insert(destination.end(), source.begin(), source.end());
 	}
 	void AppendUint32(bytes &vector, uint32_t n, bool littleEndian = false);
 	void AppendUint64(bytes &vector, uint64_t n, bool littleEndian = false);
-	bytes Splice(bytes vec, int start, int length);
-	bytes CompressPubKey(bytes pubKey);
+	bytes Splice(const bytes &vec, int start, int length);
+	bytes CompressPubKey(const bytes &pubKey);
 } // namespace ledger::utils
 
 #endif

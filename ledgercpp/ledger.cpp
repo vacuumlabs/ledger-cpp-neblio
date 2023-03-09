@@ -25,7 +25,7 @@ namespace ledger
 		std::cout << "Ledger connection opened." << std::endl;
 	}
 
-	std::tuple<bytes, std::string, bytes> Ledger::GetPublicKey(std::string path, bool confirm)
+	std::tuple<bytes, std::string, bytes> Ledger::GetPublicKey(const std::string &path, bool confirm)
 	{
 		auto payload = bytes();
 
@@ -119,7 +119,7 @@ namespace ledger
 		return data;
 	}
 
-	Tx Ledger::SplitTransaction(bytes transaction)
+	Tx Ledger::SplitTransaction(const bytes &transaction)
 	{
 		Tx tx;
 		tx.inputs = std::vector<TxInput>();
@@ -328,7 +328,7 @@ namespace ledger
 		return {Error::SUCCESS, finalResults};
 	}
 
-	void Ledger::UntrustedHashTxInputFinalize(Tx tx, std::string changePath)
+	void Ledger::UntrustedHashTxInputFinalize(Tx tx, const std::string &changePath)
 	{
 		auto ins = APDU::INS_UNTRUSTED_HASH_TRANSACTION_INPUT_FINALIZE;
 		auto p2 = 0x00;
@@ -382,7 +382,7 @@ namespace ledger
 		}
 	}
 
-	void Ledger::UntrustedHashTxInputStart(Tx tx, std::vector<TrustedInput> trustedInputs, int inputIndex, bytes script, bool isNewTransaction)
+	void Ledger::UntrustedHashTxInputStart(Tx tx, const std::vector<TrustedInput> &trustedInputs, int inputIndex, bytes script, bool isNewTransaction)
 	{
 		auto ins = APDU::INS_UNTRUSTED_HASH_TRANSACTION_INPUT_START;
 		auto p1 = 0x00;
@@ -432,7 +432,7 @@ namespace ledger
 		}
 	}
 
-	std::vector<std::tuple<int, bytes>> Ledger::SignTransaction(std::string address, uint64_t amount, uint64_t fees, std::string changePath, std::vector<std::string> signPaths, std::vector<std::tuple<bytes, uint32_t>> rawUtxos, uint32_t locktime)
+	std::vector<std::tuple<int, bytes>> Ledger::SignTransaction(const std::string &address, uint64_t amount, uint64_t fees, const std::string &changePath, const std::vector<std::string> &signPaths, const std::vector<std::tuple<bytes, uint32_t>> &rawUtxos, uint32_t locktime)
 	{
 		// TODO GK - check amount available?
 

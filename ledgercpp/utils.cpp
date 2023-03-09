@@ -8,7 +8,7 @@
 
 namespace ledger::utils
 {
-	std::string BytesToHex(bytes vec)
+	std::string BytesToHex(const bytes &vec)
 	{
 		std::stringstream ss;
 		for (int i = 0; i < vec.size(); i++)
@@ -19,7 +19,7 @@ namespace ledger::utils
 		return ss.str();
 	}
 
-	void PrintHex(bytes vec)
+	void PrintHex(const bytes &vec)
 	{
 		for (int i = 0; i < vec.size(); i++)
 		{
@@ -119,7 +119,7 @@ namespace ledger::utils
 		AppendVector(vector, Uint64ToBytes(n, 8, littleEndian));
 	}
 
-	bytes Splice(bytes vec, int start, int length)
+	bytes Splice(const bytes &vec, int start, int length)
 	{
 		bytes result(length);
 		copy(vec.begin() + start, vec.begin() + start + length, result.begin());
@@ -127,7 +127,7 @@ namespace ledger::utils
 		return result;
 	}
 
-	bytes CompressPubKey(bytes pubKey)
+	bytes CompressPubKey(const bytes &pubKey)
 	{
 		if (pubKey.size() != 65)
 		{
