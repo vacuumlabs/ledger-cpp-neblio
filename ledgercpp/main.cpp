@@ -39,45 +39,6 @@ int getPublicKey()
   return 0;
 }
 
-int getTrustedInputFromSerializedTx()
-{
-  ledger::Ledger ledger;
-  ledger.open();
-
-  auto serializedTransaction = utils::HexToBytes(NEBLIO_TX_FROM_RPC);
-
-  auto result = ledger.GetTrustedInput(0, serializedTransaction);
-  auto resultError = std::get<0>(result);
-  if (resultError != ledger::Error::SUCCESS)
-  {
-    std::cout << "get trusted input error: " << ledger::error_message(resultError) << std::endl;
-    return -1;
-  }
-
-  auto trustedInput = std::get<1>(result);
-  utils::PrintHex(trustedInput);
-}
-
-int getTrustedInputFromDeserializedTx()
-{
-  ledger::Ledger ledger;
-  ledger.open();
-
-  auto serializedTransaction = utils::HexToBytes(NEBLIO_TX_FROM_RPC);
-  auto tx = ledger.DeserializeTransaction(serializedTransaction);
-
-  auto result = ledger.GetTrustedInput(0, tx);
-  auto resultError = std::get<0>(result);
-  if (resultError != ledger::Error::SUCCESS)
-  {
-    std::cout << "get trusted input error: " << ledger::error_message(resultError) << std::endl;
-    return -1;
-  }
-
-  auto trustedInput = std::get<1>(result);
-  utils::PrintHex(trustedInput);
-}
-
 void signTransaction()
 {
   ledger::Ledger ledger;
@@ -86,11 +47,6 @@ void signTransaction()
   auto serializedTransaction = utils::HexToBytes(UTXO_TX_FROM_TESTS);
   auto txstr = utils::BytesToHex(serializedTransaction);
 
-  // ledger compressed       = TKSYmiGWAJF8LLX6gwR55T78K9bSExkh3o
-  // ledger uncompressed     = TSXk6wUvK2PRc9pfijr13r4XW5WvaaM4V7
-  // ledger fixed compressed = TSf9z6pmeg5FyVGuQbBBU1iZKUM5ijhXue; // last working
-  // ledger.SignTransaction("TSf9z6pmeg5FyVGuQbBBU1iZKUM5ijhXue", 100000, 4000, "m/44'/146'/0'/0/0", {"m/44'/146'/0'/0/0"}, {{serializedTransaction, 0}}, 0);
-  // from ledger app tests   = tb1qzdr7s2sr0dwmkwx033r4nujzk86u0cy6fmzfjk
   auto result = ledger.SignTransaction("mhKsh7EzJo1gSU1vrpyejS1qsJAuKyaWWg", 999800, 200, "", {"m/84'/1'/0'/0/0"}, {{serializedTransaction, 1}}, 1901594);
 
   if (utils::BytesToHex(std::get<1>(result[0])) != "3044022100ca7c026ef193d0e0091c4f7855f883689fca843c974b9a2a4c7285af1e24683b021f28f6c0b5f8899389b473669a1d92dc950af57cb4d1013b510b9b7d1617bb2401")
@@ -105,24 +61,6 @@ void signTransaction()
 
 int main(int argc, char *argv[])
 {
-  if (argc >= 2)
-  {
-    if (strcmp(argv[1], "trusted-input") == 0)
-    {
-      getTrustedInputFromSerializedTx();
-      getTrustedInputFromDeserializedTx();
-    }
-    else if (strcmp(argv[1], "sign-tx") == 0)
-    {
-      signTransaction();
-    }
-    else if (strcmp(argv[1], "get-pub-key") == 0)
-    {
-      getPublicKey();
-    }
-  }
-  else
-  {
-    signTransaction();
-  }
+  // getPublicKey();
+  signTransaction();
 }

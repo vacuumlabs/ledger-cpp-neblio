@@ -43,13 +43,15 @@ Build:
 make
 ```
 
+Uncomment and comment the functions in `main` as you wish.
+
 Run:
 
 ```
-./main pub-key
+./main
 ```
 
-The output for `pub-key` with our dev Ledger should be:
+The output for `getPublicKey` with our dev Ledger should be:
 
 ```
 Opening Ledger connection

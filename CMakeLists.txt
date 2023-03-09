@@ -34,6 +34,8 @@ set(LEDGERCPP_SOURCE
         ledgercpp/ledger.h
         ledgercpp/transport.cpp
         ledgercpp/transport.h
+        ledgercpp/tx.cpp
+        ledgercpp/tx.h
         ledgercpp/uint256.h
         ledgercpp/utils.cpp
         ledgercpp/utils.h

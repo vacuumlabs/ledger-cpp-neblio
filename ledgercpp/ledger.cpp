@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "base58.h"
 #include "bip32.h"
+#include "tx.h"
 
 #include <algorithm>
 #include <iostream>
@@ -58,113 +59,6 @@ namespace ledger
 		return {pubKey, std::string(address.begin(), address.end()), chainCode};
 	}
 
-	std::tuple<Error, bytes> Ledger::sign(uint32_t account, const bytes &msg)
-	{
-		auto payload = utils::IntToBytes(account, 4);
-		payload.insert(payload.end(), msg.begin(), msg.end());
-		auto result = transport_->exchange(APDU::CLA, APDU::INS_SIGN, 0x00, 0x00, payload);
-		auto err = std::get<0>(result);
-		auto buffer = std::get<1>(result);
-		if (err != Error::SUCCESS)
-			return {err, {}};
-		return {err, bytes(buffer.begin() + 1, buffer.end())};
-	}
-
-	Tx Ledger::DeserializeTransaction(const bytes &transaction)
-	{
-		Tx tx;
-		tx.inputs = std::vector<TxInput>();
-		tx.outputs = std::vector<TxOutput>();
-
-		auto offset = 0;
-
-		tx.version = utils::BytesToInt(utils::Splice(transaction, offset, 4), true);
-		offset += 4;
-
-		tx.time = utils::BytesToInt(utils::Splice(transaction, offset, 4), true);
-		offset += 4;
-
-		auto varint = utils::DeserializeVarint(transaction, offset);
-		auto inputsCount = std::get<0>(varint);
-		offset += std::get<1>(varint);
-
-		auto flags = 0;
-		if (inputsCount == 0)
-		{
-			flags = utils::BytesToInt(utils::Splice(transaction, offset, 1));
-			offset += 1;
-
-			varint = utils::DeserializeVarint(transaction, offset);
-			inputsCount = std::get<0>(varint);
-			offset += std::get<1>(varint);
-		}
-
-		for (auto i = 0; i < inputsCount; i++)
-		{
-			TxInput input;
-
-			input.prevout = utils::Splice(transaction, offset, 36);
-			offset += 36;
-
-			varint = utils::DeserializeVarint(transaction, offset);
-			offset += std::get<1>(varint);
-			input.script = utils::Splice(transaction, offset, std::get<0>(varint));
-
-			offset += std::get<0>(varint);
-			input.sequence = utils::BytesToInt(utils::Splice(transaction, offset, 4));
-			offset += 4;
-
-			tx.inputs.push_back(input);
-		}
-
-		varint = utils::DeserializeVarint(transaction, offset);
-		auto numberOutputs = std::get<0>(varint);
-		offset += std::get<1>(varint);
-
-		for (auto i = 0; i < numberOutputs; i++)
-		{
-			TxOutput output;
-
-			output.amount = utils::BytesToUint64(utils::Splice(transaction, offset, 8), true);
-			offset += 8;
-
-			varint = utils::DeserializeVarint(transaction, offset);
-			offset += std::get<1>(varint);
-
-			output.script = utils::Splice(transaction, offset, std::get<0>(varint));
-			offset += std::get<0>(varint);
-
-			tx.outputs.push_back(output);
-		}
-
-		if (flags != 0)
-		{
-			TxWitness txWitness;
-			for (auto i = 0; i < inputsCount; i++)
-			{
-				auto numberOfWitnesses = utils::DeserializeVarint(transaction, offset);
-				offset += std::get<1>(numberOfWitnesses);
-
-				TxInWitness txInWitness;
-				ScriptWitness scriptWitness;
-				for (auto j = 0; j < std::get<0>(numberOfWitnesses); j++)
-				{
-					auto scriptWitnessSize = utils::DeserializeVarint(transaction, offset);
-					offset += std::get<1>(scriptWitnessSize);
-					scriptWitness.stack.push_back(bytes(transaction.begin() + offset, transaction.begin() + offset + std::get<0>(scriptWitnessSize)));
-					offset += std::get<0>(scriptWitnessSize);
-				}
-
-				txInWitness.scriptWitness = scriptWitness;
-				txWitness.txInWitnesses.push_back(txInWitness);
-			}
-		}
-
-		tx.locktime = utils::BytesToInt(utils::Splice(transaction, offset, 4));
-
-		return tx;
-	}
-
 	std::tuple<Error, bytes> Ledger::GetTrustedInputRaw(bool firstRound, uint32_t indexLookup, const bytes &transactionData)
 	{
 		auto result = transport_->exchange(APDU::CLA, APDU::INS_GET_TRUSTED_INPUT, firstRound ? 0x00 : 0x80, 0x00, transactionData);
@@ -202,46 +96,6 @@ namespace ledger
 		utils::AppendUint32(serializedTransaction, tx.locktime);
 
 		return GetTrustedInput(indexLookup, serializedTransaction);
-	}
-
-	TrustedInput Ledger::DeserializeTrustedInput(const bytes &serializedTrustedInput)
-	{
-		TrustedInput trustedInput;
-
-		// TODO GK - direct assignment ok?
-		utils::AppendVector(trustedInput.serialized, serializedTrustedInput);
-
-		auto offset = 0;
-
-		auto trustedInputMagic = serializedTrustedInput[offset];
-		if (trustedInputMagic != 0x32)
-			throw "Invalid trusted input magic";
-		offset += 1;
-
-		auto zeroByte = serializedTrustedInput[offset];
-		if (zeroByte != 0x00)
-			throw "Zero byte is not a zero byte";
-		offset += 1;
-
-		trustedInput.random = utils::BytesToInt(utils::Splice(serializedTrustedInput, offset, 2));
-		offset += 2;
-
-		trustedInput.prevTxId = utils::Splice(serializedTrustedInput, offset, 32);
-		offset += 32;
-
-		trustedInput.outIndex = utils::BytesToInt(utils::Splice(serializedTrustedInput, offset, 4), true);
-		offset += 4;
-
-		trustedInput.amount = utils::BytesToInt(utils::Splice(serializedTrustedInput, offset, 8), true);
-		offset += 8;
-
-		trustedInput.hmac = utils::Splice(serializedTrustedInput, offset, 8);
-		offset += 8;
-
-		if (offset != serializedTrustedInput.size())
-			throw "Leftover bytes in trusted input";
-
-		return trustedInput;
 	}
 
 	std::tuple<Error, bytes> Ledger::GetTrustedInput(uint32_t indexLookup, const bytes &serializedTransaction)
@@ -396,7 +250,7 @@ namespace ledger
 			utxo.raw = std::get<0>(rawUtxo);
 			utxo.index = std::get<1>(rawUtxo);
 
-			auto utxoTx = DeserializeTransaction(utxo.raw);
+			auto utxoTx = ledger::DeserializeTransaction(utxo.raw);
 			utxo.tx = utxoTx;
 
 			utxos.push_back(utxo);
@@ -412,7 +266,7 @@ namespace ledger
 			const auto &utxo = utxos[i];
 
 			const auto serializedTrustedInputResult = GetTrustedInput(utxo.index, utxo.tx);
-			auto trustedInput = DeserializeTrustedInput(std::get<1>(serializedTrustedInputResult));
+			auto trustedInput = ledger::DeserializeTrustedInput(std::get<1>(serializedTrustedInputResult));
 
 			TxInput txInput;
 			txInput.prevout = trustedInput.prevTxId;
