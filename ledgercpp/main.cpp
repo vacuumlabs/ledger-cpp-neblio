@@ -91,7 +91,16 @@ void signTransaction()
   // ledger fixed compressed = TSf9z6pmeg5FyVGuQbBBU1iZKUM5ijhXue; // last working
   // ledger.SignTransaction("TSf9z6pmeg5FyVGuQbBBU1iZKUM5ijhXue", 100000, 4000, "m/44'/146'/0'/0/0", {"m/44'/146'/0'/0/0"}, {{serializedTransaction, 0}}, 0);
   // from ledger app tests   = tb1qzdr7s2sr0dwmkwx033r4nujzk86u0cy6fmzfjk
-  ledger.SignTransaction("mhKsh7EzJo1gSU1vrpyejS1qsJAuKyaWWg", 999800, 200, "", {"m/84'/1'/0'/0/0"}, {{serializedTransaction, 1}}, 1901594);
+  auto result = ledger.SignTransaction("mhKsh7EzJo1gSU1vrpyejS1qsJAuKyaWWg", 999800, 200, "", {"m/84'/1'/0'/0/0"}, {{serializedTransaction, 1}}, 1901594);
+
+  if (utils::BytesToHex(std::get<1>(result[0])) != "3044022100ca7c026ef193d0e0091c4f7855f883689fca843c974b9a2a4c7285af1e24683b021f28f6c0b5f8899389b473669a1d92dc950af57cb4d1013b510b9b7d1617bb2401")
+  {
+    std::cout << "Different results received";
+  }
+  else
+  {
+    std::cout << "Same results received";
+  }
 }
 
 int main(int argc, char *argv[])
