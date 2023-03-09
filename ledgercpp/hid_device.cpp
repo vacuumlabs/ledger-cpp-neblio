@@ -31,7 +31,7 @@ namespace ledger
 		return Error::SUCCESS;
 	}
 
-	int HID::send(const std::vector<uint8_t> &data)
+	int HID::send(const bytes &data)
 	{
 		if (data.empty())
 			return -1;
@@ -46,12 +46,12 @@ namespace ledger
 		while (offset < data_new.size())
 		{
 			// Header: channel (0x0101), tag (0x05), sequence index
-			std::vector<uint8_t> header{0x01, 0x01, 0x05};
+			bytes header{0x01, 0x01, 0x05};
 
 			auto seq_idx_bytes = utils::IntToBytes(seq_idx, 2);
 			header.insert(header.end(), seq_idx_bytes.begin(), seq_idx_bytes.end());
 
-			std::vector<uint8_t>::iterator it;
+			bytes::iterator it;
 			if (data_new.size() - offset < 64 - header.size())
 			{
 				it = data_new.end();
@@ -61,7 +61,7 @@ namespace ledger
 				it = data_new.begin() + offset + 64 - header.size();
 			}
 
-			std::vector<uint8_t> data_chunk{data_new.begin() + offset, it};
+			bytes data_chunk{data_new.begin() + offset, it};
 			data_chunk.insert(data_chunk.begin(), header.begin(), header.end());
 			data_chunk.insert(data_chunk.begin(), 0x00);
 
@@ -76,7 +76,7 @@ namespace ledger
 		return length;
 	}
 
-	int HID::recv(std::vector<uint8_t> &rdata)
+	int HID::recv(bytes &rdata)
 	{
 		int seq_idx = 0;
 		uint8_t buf[64];
@@ -86,7 +86,7 @@ namespace ledger
 			return -1;
 		hid_set_nonblocking(device_, true);
 
-		std::vector<uint8_t> data_chunk(buf, buf + sizeof(buf));
+		bytes data_chunk(buf, buf + sizeof(buf));
 
 		assert(data_chunk[0] == 0x01);
 		assert(data_chunk[1] == 0x01);
@@ -96,20 +96,20 @@ namespace ledger
 		assert(seq_idx_bytes[0] == data_chunk[3]);
 		assert(seq_idx_bytes[1] == data_chunk[4]);
 
-		auto data_len = utils::BytesToInt(std::vector<uint8_t>(data_chunk.begin() + 5, data_chunk.begin() + 7));
-		std::vector<uint8_t> data(data_chunk.begin() + 7, data_chunk.end());
+		auto data_len = utils::BytesToInt(bytes(data_chunk.begin() + 5, data_chunk.begin() + 7));
+		bytes data(data_chunk.begin() + 7, data_chunk.end());
 
 		while (data.size() < data_len)
 		{
 			uint8_t read_bytes[64];
 			if (hid_read_timeout(device_, read_bytes, sizeof(read_bytes), 1000) == -1)
 				return -1;
-			std::vector<uint8_t> tmp(read_bytes, read_bytes + sizeof(read_bytes));
+			bytes tmp(read_bytes, read_bytes + sizeof(read_bytes));
 			data.insert(data.end(), tmp.begin() + 5, tmp.end());
 		}
 
-		auto sw = utils::BytesToInt(std::vector<uint8_t>(data.begin() + data_len - 2, data.begin() + data_len));
-		rdata = std::vector<uint8_t>(data.begin(), data.begin() + data_len - 2);
+		auto sw = utils::BytesToInt(bytes(data.begin() + data_len - 2, data.begin() + data_len));
+		rdata = bytes(data.begin(), data.begin() + data_len - 2);
 
 		return sw;
 	}
@@ -140,8 +140,8 @@ namespace ledger
 		while (cur_dev)
 		{
 			if (cur_dev->interface_number == 0 ||
-					// MacOS specific
-					cur_dev->usage_page == 0xffa0)
+				// MacOS specific
+				cur_dev->usage_page == 0xffa0)
 			{
 				devices.emplace_back(cur_dev->path);
 			}

@@ -8,7 +8,7 @@
 
 namespace ledger::utils
 {
-	std::string BytesToHex(std::vector<uint8_t> vec)
+	std::string BytesToHex(bytes vec)
 	{
 		std::stringstream ss;
 		for (int i = 0; i < vec.size(); i++)
@@ -19,7 +19,7 @@ namespace ledger::utils
 		return ss.str();
 	}
 
-	void PrintHex(std::vector<uint8_t> vec)
+	void PrintHex(bytes vec)
 	{
 		for (int i = 0; i < vec.size(); i++)
 		{
@@ -29,12 +29,12 @@ namespace ledger::utils
 		std::cout << std::dec << std::endl;
 	}
 
-	std::vector<uint8_t> HexToBytes(const std::string &data)
+	bytes HexToBytes(const std::string &data)
 	{
 		std::stringstream ss;
 		ss << data;
 
-		std::vector<uint8_t> resBytes;
+		bytes resBytes;
 		size_t count = 0;
 		const auto len = data.size();
 		while (ss.good() && count < len)
@@ -49,22 +49,22 @@ namespace ledger::utils
 		return resBytes;
 	}
 
-	uint64_t BytesToUint64(const std::vector<uint8_t> &bytes)
+	uint64_t BytesToUint64(const bytes &_bytes)
 	{
 		uint64_t value = 0;
-		for (const uint8_t &byte : bytes)
+		for (const uint8_t &byte : _bytes)
 		{
 			value = (value << 8) + byte;
 		}
 		return value;
 	}
 
-	int BytesToInt(const std::vector<uint8_t> &bytes, bool littleEndian)
+	int BytesToInt(const bytes &_bytes, bool littleEndian)
 	{
-		auto bytesToConvert = bytes;
+		auto bytesToConvert = _bytes;
 		if (littleEndian)
 		{
-			bytesToConvert = std::vector<uint8_t>(bytesToConvert.rbegin(), bytesToConvert.rend());
+			bytesToConvert = bytes(bytesToConvert.rbegin(), bytesToConvert.rend());
 		}
 
 		int value = 0;
@@ -75,9 +75,9 @@ namespace ledger::utils
 		return value;
 	}
 
-	std::vector<uint8_t> IntToBytes(uint32_t n, uint32_t length, bool littleEndian)
+	bytes IntToBytes(uint32_t n, uint32_t length, bool littleEndian)
 	{
-		std::vector<uint8_t> bytes;
+		bytes bytes;
 		bytes.reserve(length);
 		for (auto i = 0; i < length; i++)
 		{
@@ -92,14 +92,14 @@ namespace ledger::utils
 		return bytes;
 	}
 
-	void AppendUint32(std::vector<uint8_t> &vector, uint32_t n, bool littleEndian)
+	void AppendUint32(bytes &vector, uint32_t n, bool littleEndian)
 	{
 		AppendVector(vector, IntToBytes(n, 4, littleEndian));
 	}
 
-	std::vector<uint8_t> Uint64ToBytes(uint64_t n, uint32_t length, bool littleEndian)
+	bytes Uint64ToBytes(uint64_t n, uint32_t length, bool littleEndian)
 	{
-		std::vector<uint8_t> bytes;
+		bytes bytes;
 		bytes.reserve(length);
 		for (auto i = 0; i < length; i++)
 		{
@@ -114,20 +114,20 @@ namespace ledger::utils
 		return bytes;
 	}
 
-	void AppendUint64(std::vector<uint8_t> &vector, uint64_t n, bool littleEndian)
+	void AppendUint64(bytes &vector, uint64_t n, bool littleEndian)
 	{
 		AppendVector(vector, Uint64ToBytes(n, 8, littleEndian));
 	}
 
-	std::vector<uint8_t> Splice(std::vector<uint8_t> vec, int start, int length)
+	bytes Splice(bytes vec, int start, int length)
 	{
-		std::vector<uint8_t> result(length);
+		bytes result(length);
 		copy(vec.begin() + start, vec.begin() + start + length, result.begin());
 
 		return result;
 	}
 
-	std::vector<uint8_t> CompressPubKey(std::vector<uint8_t> pubKey)
+	bytes CompressPubKey(bytes pubKey)
 	{
 		if (pubKey.size() != 65)
 		{
@@ -139,7 +139,7 @@ namespace ledger::utils
 			throw std::runtime_error("Invalid public key format");
 		}
 
-		std::vector<uint8_t> compressedPubKey(33);
+		bytes compressedPubKey(33);
 		compressedPubKey[0] = pubKey[64] & 1 ? 0x03 : 0x02;
 		copy(pubKey.begin() + 1, pubKey.begin() + 33, compressedPubKey.begin() + 1);
 

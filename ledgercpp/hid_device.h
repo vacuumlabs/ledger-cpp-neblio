@@ -10,8 +10,8 @@ namespace ledger
 	{
 	public:
 		Error open() override;
-		int send(const std::vector<uint8_t> &data) override;
-		int recv(std::vector<uint8_t> &rdata) override;
+		int send(const bytes &data) override;
+		int recv(bytes &rdata) override;
 		void close() noexcept override;
 		[[nodiscard]] bool is_open() const override;
 

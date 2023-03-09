@@ -1,25 +1,26 @@
 #pragma once
 
+#include "bytes.h"
 #include "transport.h"
 
 namespace ledger
 {
 	struct TxInput
 	{
-		std::vector<uint8_t> prevout;
-		std::vector<uint8_t> script;
+		bytes prevout;
+		bytes script;
 		uint32_t sequence;
 	};
 
 	struct TxOutput
 	{
 		uint64_t amount;
-		std::vector<uint8_t> script;
+		bytes script;
 	};
 
 	struct ScriptWitness
 	{
-		std::vector<std::vector<uint8_t>> stack;
+		std::vector<bytes> stack;
 	};
 
 	struct TxInWitness
@@ -44,12 +45,12 @@ namespace ledger
 
 	struct TrustedInput
 	{
-		std::vector<uint8_t> serialized;
+		bytes serialized;
 		uint16_t random;
-		std::vector<uint8_t> prevTxId;
+		bytes prevTxId;
 		uint32_t outIndex;
 		uint64_t amount;
-		std::vector<uint8_t> hmac;
+		bytes hmac;
 	};
 
 	class Ledger
@@ -72,26 +73,26 @@ namespace ledger
 
 		Error open();
 
-		std::tuple<std::vector<uint8_t>, std::string, std::vector<uint8_t>> GetPublicKey(std::string path, bool confirm);
-		std::tuple<Error, std::vector<uint8_t>> sign(uint32_t account, const std::vector<uint8_t> &msg);
+		std::tuple<bytes, std::string, bytes> GetPublicKey(std::string path, bool confirm);
+		std::tuple<Error, bytes> sign(uint32_t account, const bytes &msg);
 
 		void close();
 
 		// private:
 		std::unique_ptr<Transport> transport_;
 
-		std::tuple<Error, std::vector<uint8_t>> ProcessScriptBlocks(const std::vector<uint8_t> &script, uint32_t sequence);
-		std::tuple<Error, std::vector<uint8_t>> GetTrustedInputRaw(bool firstRound, uint32_t indexLookup, const std::vector<uint8_t> &data);
-		std::tuple<Error, std::vector<uint8_t>> _NOT_WORKING_GetTrustedInput_NOT_WORKING_(uint32_t indexLookup, const std::vector<uint8_t> &transaction);
-		std::tuple<Error, std::vector<uint8_t>> GetTrustedInput(uint32_t indexLookup, const std::vector<uint8_t> &serializedTransaction);
+		std::tuple<Error, bytes> ProcessScriptBlocks(const bytes &script, uint32_t sequence);
+		std::tuple<Error, bytes> GetTrustedInputRaw(bool firstRound, uint32_t indexLookup, const bytes &data);
+		std::tuple<Error, bytes> _NOT_WORKING_GetTrustedInput_NOT_WORKING_(uint32_t indexLookup, const bytes &transaction);
+		std::tuple<Error, bytes> GetTrustedInput(uint32_t indexLookup, const bytes &serializedTransaction);
 		void UntrustedHashTxInputFinalize(Tx tx, std::string changePath);
-		void UntrustedHashTxInputStart(Tx tx, std::vector<TrustedInput> trustedInputs, int inputIndex, std::vector<uint8_t> script, bool isNewTransaction);
-		std::vector<std::tuple<int, std::vector<uint8_t>>> SignTransaction(std::string address, uint64_t amount, uint64_t fees, std::string changePath, std::vector<std::string> signPaths, std::vector<std::tuple<std::vector<uint8_t>, uint32_t>> rawUtxos, uint32_t locktime);
-		std::tuple<Error, std::vector<uint8_t>> GetTrustedInput(uint32_t indexLookup, Tx tx);
-		TrustedInput DeserializeTrustedInput(const std::vector<uint8_t> &serializedTrustedInput);
+		void UntrustedHashTxInputStart(Tx tx, std::vector<TrustedInput> trustedInputs, int inputIndex, bytes script, bool isNewTransaction);
+		std::vector<std::tuple<int, bytes>> SignTransaction(std::string address, uint64_t amount, uint64_t fees, std::string changePath, std::vector<std::string> signPaths, std::vector<std::tuple<bytes, uint32_t>> rawUtxos, uint32_t locktime);
+		std::tuple<Error, bytes> GetTrustedInput(uint32_t indexLookup, Tx tx);
+		TrustedInput DeserializeTrustedInput(const bytes &serializedTrustedInput);
 
-		std::tuple<uint32_t, uint8_t> GetVarint(const std::vector<uint8_t> &data, uint32_t offset);
-		std::vector<uint8_t> CreateVarint(uint32_t value);
-		Tx SplitTransaction(std::vector<uint8_t> transaction);
+		std::tuple<uint32_t, uint8_t> GetVarint(const bytes &data, uint32_t offset);
+		bytes CreateVarint(uint32_t value);
+		Tx SplitTransaction(bytes transaction);
 	};
 }

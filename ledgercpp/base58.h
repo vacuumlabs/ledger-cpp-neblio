@@ -1,9 +1,13 @@
+#include "bytes.h"
+
 #include <vector>
 #include <random>
 #include <string>
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
+
+using namespace ledger;
 
 inline static constexpr const uint8_t Base58Map[] = {
     '1', '2', '3', '4', '5', '6', '7', '8',
@@ -24,9 +28,9 @@ inline static constexpr const uint8_t AlphaMap[] = {
     0xff, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0xff, 0x2c, 0x2d, 0x2e,
     0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-std::string Base58Encode(const std::vector<uint8_t> &data)
+std::string Base58Encode(const bytes &data)
 {
-    std::vector<uint8_t> digits((data.size() * 138 / 100) + 1);
+    bytes digits((data.size() * 138 / 100) + 1);
     size_t digitslen = 1;
     for (size_t i = 0; i < data.size(); i++)
     {
@@ -48,9 +52,9 @@ std::string Base58Encode(const std::vector<uint8_t> &data)
     return result;
 }
 
-std::vector<uint8_t> Base58Decode(const std::string &data)
+bytes Base58Decode(const std::string &data)
 {
-    std::vector<uint8_t> result((data.size() * 138 / 100) + 1);
+    bytes result((data.size() * 138 / 100) + 1);
     size_t resultlen = 1;
     for (size_t i = 0; i < data.size(); i++)
     {

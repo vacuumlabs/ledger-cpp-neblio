@@ -1,29 +1,30 @@
 #ifndef _LEDGER_UTILS
 #define _LEDGER_UTILS 1
 
+#include "bytes.h"
+
 #include <cstdint>
 #include <vector>
 #include <string>
 
 namespace ledger::utils
 {
-	std::string BytesToHex(std::vector<uint8_t> vec);
-
-	void PrintHex(std::vector<uint8_t> vec);
-	std::vector<uint8_t> HexToBytes(const std::string &data);
-	uint64_t BytesToUint64(const std::vector<uint8_t> &bytes);
-	int BytesToInt(const std::vector<uint8_t> &bytes, bool littleEndian = false);
-	std::vector<uint8_t> IntToBytes(unsigned int n, unsigned int length, bool littleEndian = false);
-	std::vector<uint8_t> Uint64ToBytes(uint64_t n, unsigned int length, bool littleEndian = false);
+	std::string BytesToHex(bytes vec);
+	void PrintHex(bytes vec);
+	bytes HexToBytes(const std::string &data);
+	uint64_t BytesToUint64(const bytes &bytes);
+	int BytesToInt(const bytes &bytes, bool littleEndian = false);
+	bytes IntToBytes(unsigned int n, unsigned int length, bool littleEndian = false);
+	bytes Uint64ToBytes(uint64_t n, unsigned int length, bool littleEndian = false);
 	template <typename T>
 	void AppendVector(std::vector<T> &destination, std::vector<T> source)
 	{
 		destination.insert(destination.end(), source.begin(), source.end());
 	}
-	void AppendUint32(std::vector<uint8_t> &vector, uint32_t n, bool littleEndian = false);
-	void AppendUint64(std::vector<uint8_t> &vector, uint64_t n, bool littleEndian = false);
-	std::vector<uint8_t> Splice(std::vector<uint8_t> vec, int start, int length);
-	std::vector<uint8_t> CompressPubKey(std::vector<uint8_t> pubKey);
+	void AppendUint32(bytes &vector, uint32_t n, bool littleEndian = false);
+	void AppendUint64(bytes &vector, uint64_t n, bool littleEndian = false);
+	bytes Splice(bytes vec, int start, int length);
+	bytes CompressPubKey(bytes pubKey);
 } // namespace ledger::utils
 
 #endif

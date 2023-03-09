@@ -12,9 +12,9 @@ namespace ledger::bip32
 
     // copied from https://github.com/bitcoin/bitcoin/blob/master/src/util/bip32.cpp#L13
     // and adjusted for uint8_t instead of uint32_t vector
-    std::vector<uint8_t> ParseHDKeypath(const std::string &keypath_str)
+    bytes ParseHDKeypath(const std::string &keypath_str)
     {
-        std::vector<uint8_t> keypath;
+        bytes keypath;
         std::stringstream ss(keypath_str);
         std::string item;
         bool first = true;

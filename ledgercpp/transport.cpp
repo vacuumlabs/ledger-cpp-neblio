@@ -20,13 +20,13 @@ namespace ledger
 		return comm_->open();
 	}
 
-	std::tuple<ledger::Error, std::vector<uint8_t>> Transport::exchange(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const std::vector<uint8_t> &cdata)
+	std::tuple<ledger::Error, bytes> Transport::exchange(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const bytes &cdata)
 	{
 		int length = this->send(cla, ins, p1, p2, cdata);
 		if (length < 0)
 			return {Error::DEVICE_DATA_SEND_FAIL, {}};
 
-		std::vector<uint8_t> buffer;
+		bytes buffer;
 		int sw = this->recv(buffer);
 		if (sw < 0)
 			return {Error::DEVICE_DATA_RECV_FAIL, {}};
@@ -42,7 +42,7 @@ namespace ledger
 		return comm_->close();
 	}
 
-	int Transport::send(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const std::vector<uint8_t> &cdata)
+	int Transport::send(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, const bytes &cdata)
 	{
 		if (!comm_->is_open())
 			return -1;
@@ -55,7 +55,7 @@ namespace ledger
 		return comm_->send(header);
 	}
 
-	int Transport::recv(std::vector<uint8_t> &rdata)
+	int Transport::recv(bytes &rdata)
 	{
 		if (!comm_->is_open())
 			return -1;
@@ -63,8 +63,8 @@ namespace ledger
 		return comm_->recv(rdata);
 	}
 
-	std::vector<uint8_t> Transport::apdu_header(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t lc)
+	bytes Transport::apdu_header(uint8_t cla, uint8_t ins, uint8_t p1, uint8_t p2, uint8_t lc)
 	{
-		return std::vector<uint8_t>{cla, ins, p1, p2, lc};
+		return bytes{cla, ins, p1, p2, lc};
 	}
 } // namespace ledger
