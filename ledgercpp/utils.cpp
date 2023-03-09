@@ -19,7 +19,7 @@ namespace ledger::utils
 		return ss.str();
 	}
 
-	void printHex(std::vector<uint8_t> vec)
+	void PrintHex(std::vector<uint8_t> vec)
 	{
 		for (int i = 0; i < vec.size(); i++)
 		{
@@ -49,7 +49,7 @@ namespace ledger::utils
 		return resBytes;
 	}
 
-	uint64_t bytes_to_uint64(const std::vector<uint8_t> &bytes)
+	uint64_t BytesToUint64(const std::vector<uint8_t> &bytes)
 	{
 		uint64_t value = 0;
 		for (const uint8_t &byte : bytes)
@@ -59,7 +59,7 @@ namespace ledger::utils
 		return value;
 	}
 
-	int bytes_to_int(const std::vector<uint8_t> &bytes, bool littleEndian)
+	int BytesToInt(const std::vector<uint8_t> &bytes, bool littleEndian)
 	{
 		auto bytesToConvert = bytes;
 		if (littleEndian)
@@ -75,7 +75,7 @@ namespace ledger::utils
 		return value;
 	}
 
-	std::vector<uint8_t> int_to_bytes(uint32_t n, uint32_t length, bool littleEndian)
+	std::vector<uint8_t> IntToBytes(uint32_t n, uint32_t length, bool littleEndian)
 	{
 		std::vector<uint8_t> bytes;
 		bytes.reserve(length);
@@ -92,12 +92,12 @@ namespace ledger::utils
 		return bytes;
 	}
 
-	void append_uint32(std::vector<uint8_t> &vector, uint32_t n, bool littleEndian)
+	void AppendUint32(std::vector<uint8_t> &vector, uint32_t n, bool littleEndian)
 	{
-		append_vector(vector, int_to_bytes(n, 4, littleEndian));
+		AppendVector(vector, IntToBytes(n, 4, littleEndian));
 	}
 
-	std::vector<uint8_t> uint64_to_bytes(uint64_t n, uint32_t length, bool littleEndian)
+	std::vector<uint8_t> Uint64ToBytes(uint64_t n, uint32_t length, bool littleEndian)
 	{
 		std::vector<uint8_t> bytes;
 		bytes.reserve(length);
@@ -114,17 +114,17 @@ namespace ledger::utils
 		return bytes;
 	}
 
-	void append_uint64(std::vector<uint8_t> &vector, uint64_t n, bool littleEndian)
+	void AppendUint64(std::vector<uint8_t> &vector, uint64_t n, bool littleEndian)
 	{
-		append_vector(vector, uint64_to_bytes(n, 8, littleEndian));
+		AppendVector(vector, Uint64ToBytes(n, 8, littleEndian));
 	}
 
-	uint32_t hardened(uint32_t n)
+	uint32_t Harden(uint32_t n)
 	{
 		return n | 0x80000000;
 	}
 
-	std::vector<uint8_t> splice(std::vector<uint8_t> vec, int start, int length)
+	std::vector<uint8_t> Splice(std::vector<uint8_t> vec, int start, int length)
 	{
 		std::vector<uint8_t> result(length);
 		copy(vec.begin() + start, vec.begin() + start + length, result.begin());
@@ -132,7 +132,7 @@ namespace ledger::utils
 		return result;
 	}
 
-	std::vector<uint8_t> compressPubKey(std::vector<uint8_t> pubKey)
+	std::vector<uint8_t> CompressPubKey(std::vector<uint8_t> pubKey)
 	{
 		if (pubKey.size() != 65)
 		{
@@ -190,7 +190,7 @@ namespace ledger::utils
 				throw std::runtime_error("Invalid keypath");
 			}
 
-			utils::append_uint32(keypath, std::stoul(item) | path);
+			utils::AppendUint32(keypath, std::stoul(item) | path);
 
 			first = false;
 		}

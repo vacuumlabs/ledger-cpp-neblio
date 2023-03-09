@@ -27,12 +27,10 @@ namespace ledger
 	std::tuple<std::vector<uint8_t>, std::string, std::vector<uint8_t>> Ledger::GetPublicKey(std::string path, bool confirm)
 	{
 		auto payload = std::vector<uint8_t>();
-		// path length
-		payload.push_back(5);
 
 		auto pathBytes = utils::ParseHDKeypath(path);
-
-		utils::append_vector(payload, pathBytes);
+		payload.push_back(pathBytes.size() / 4);
+		utils::AppendVector(payload, pathBytes);
 
 		auto result = transport_->exchange(APDU::CLA, APDU::INS_GET_PUBLIC_KEY, confirm, 0x02, payload);
 		auto err = std::get<0>(result);
@@ -40,23 +38,17 @@ namespace ledger
 		if (err != Error::SUCCESS)
 			throw error_message(err);
 
-		// std::cout << "PubKey:";
-		// utils::printHex(buffer);
-
 		auto offset = 1;
 		auto pubKeyLen = (int)buffer[offset] * 16 + 1;
-		auto pubKey = utils::splice(buffer, offset, pubKeyLen);
+		auto pubKey = utils::Splice(buffer, offset, pubKeyLen);
 		offset += pubKeyLen;
-
-		std::cout << "PubKey:";
-		utils::printHex(pubKey);
 
 		auto addressLen = (int)buffer[offset];
 		offset++;
-		auto address = utils::splice(buffer, offset, addressLen);
+		auto address = utils::Splice(buffer, offset, addressLen);
 		offset += addressLen;
 
-		auto chainCode = utils::splice(buffer, offset, 32);
+		auto chainCode = utils::Splice(buffer, offset, 32);
 		offset += 32;
 
 		if (offset != buffer.size())
@@ -67,7 +59,7 @@ namespace ledger
 
 	std::tuple<Error, std::vector<uint8_t>> Ledger::sign(uint32_t account, const std::vector<uint8_t> &msg)
 	{
-		auto payload = utils::int_to_bytes(account, 4);
+		auto payload = utils::IntToBytes(account, 4);
 		payload.insert(payload.end(), msg.begin(), msg.end());
 		auto result = transport_->exchange(APDU::CLA, APDU::INS_SIGN, 0x00, 0x00, payload);
 		auto err = std::get<0>(result);
@@ -134,10 +126,10 @@ namespace ledger
 
 		auto offset = 0;
 
-		tx.version = utils::bytes_to_int(utils::splice(transaction, offset, 4), true);
+		tx.version = utils::BytesToInt(utils::Splice(transaction, offset, 4), true);
 		offset += 4;
 
-		tx.time = utils::bytes_to_int(utils::splice(transaction, offset, 4), true);
+		tx.time = utils::BytesToInt(utils::Splice(transaction, offset, 4), true);
 		offset += 4;
 
 		auto varint = GetVarint(transaction, offset);
@@ -147,7 +139,7 @@ namespace ledger
 		auto flags = 0;
 		if (inputsCount == 0)
 		{
-			flags = utils::bytes_to_int(utils::splice(transaction, offset, 1));
+			flags = utils::BytesToInt(utils::Splice(transaction, offset, 1));
 			offset += 1;
 
 			varint = GetVarint(transaction, offset);
@@ -159,15 +151,15 @@ namespace ledger
 		{
 			TxInput input;
 
-			input.prevout = utils::splice(transaction, offset, 36);
+			input.prevout = utils::Splice(transaction, offset, 36);
 			offset += 36;
 
 			varint = GetVarint(transaction, offset);
 			offset += std::get<1>(varint);
-			input.script = utils::splice(transaction, offset, std::get<0>(varint));
+			input.script = utils::Splice(transaction, offset, std::get<0>(varint));
 
 			offset += std::get<0>(varint);
-			input.sequence = utils::bytes_to_int(utils::splice(transaction, offset, 4));
+			input.sequence = utils::BytesToInt(utils::Splice(transaction, offset, 4));
 			offset += 4;
 
 			tx.inputs.push_back(input);
@@ -181,13 +173,13 @@ namespace ledger
 		{
 			TxOutput output;
 
-			output.amount = utils::bytes_to_uint64(utils::splice(transaction, offset, 8));
+			output.amount = utils::BytesToUint64(utils::Splice(transaction, offset, 8));
 			offset += 8;
 
 			varint = GetVarint(transaction, offset);
 			offset += std::get<1>(varint);
 
-			output.script = utils::splice(transaction, offset, std::get<0>(varint));
+			output.script = utils::Splice(transaction, offset, std::get<0>(varint));
 			offset += std::get<0>(varint);
 
 			tx.outputs.push_back(output);
@@ -216,7 +208,7 @@ namespace ledger
 			}
 		}
 
-		tx.locktime = utils::bytes_to_int(utils::splice(transaction, offset, 4));
+		tx.locktime = utils::BytesToInt(utils::Splice(transaction, offset, 4));
 
 		return tx;
 	}
@@ -235,27 +227,27 @@ namespace ledger
 	std::tuple<Error, std::vector<uint8_t>> Ledger::GetTrustedInput(uint32_t indexLookup, Tx tx)
 	{
 		std::vector<uint8_t> serializedTransaction;
-		utils::append_uint32(serializedTransaction, tx.version, true);
-		utils::append_uint32(serializedTransaction, tx.time, true);
+		utils::AppendUint32(serializedTransaction, tx.version, true);
+		utils::AppendUint32(serializedTransaction, tx.time, true);
 
-		utils::append_vector(serializedTransaction, CreateVarint(tx.inputs.size()));
+		utils::AppendVector(serializedTransaction, CreateVarint(tx.inputs.size()));
 		for (auto input : tx.inputs)
 		{
-			utils::append_vector(serializedTransaction, input.prevout);
-			utils::append_vector(serializedTransaction, CreateVarint(input.script.size()));
-			utils::append_vector(serializedTransaction, input.script);
-			utils::append_uint32(serializedTransaction, input.sequence);
+			utils::AppendVector(serializedTransaction, input.prevout);
+			utils::AppendVector(serializedTransaction, CreateVarint(input.script.size()));
+			utils::AppendVector(serializedTransaction, input.script);
+			utils::AppendUint32(serializedTransaction, input.sequence);
 		}
 
-		utils::append_vector(serializedTransaction, CreateVarint(tx.outputs.size()));
+		utils::AppendVector(serializedTransaction, CreateVarint(tx.outputs.size()));
 		for (auto output : tx.outputs)
 		{
-			utils::append_uint64(serializedTransaction, output.amount);
-			utils::append_vector(serializedTransaction, CreateVarint(output.script.size()));
-			utils::append_vector(serializedTransaction, output.script);
+			utils::AppendUint64(serializedTransaction, output.amount);
+			utils::AppendVector(serializedTransaction, CreateVarint(output.script.size()));
+			utils::AppendVector(serializedTransaction, output.script);
 		}
 
-		utils::append_uint32(serializedTransaction, tx.locktime);
+		utils::AppendUint32(serializedTransaction, tx.locktime);
 
 		return GetTrustedInput(indexLookup, serializedTransaction);
 	}
@@ -265,7 +257,7 @@ namespace ledger
 		TrustedInput trustedInput;
 
 		// TODO GK - direct assignment ok?
-		utils::append_vector(trustedInput.serialized, serializedTrustedInput);
+		utils::AppendVector(trustedInput.serialized, serializedTrustedInput);
 
 		auto offset = 0;
 
@@ -279,19 +271,19 @@ namespace ledger
 			throw "Zero byte is not a zero byte";
 		offset += 1;
 
-		trustedInput.random = utils::bytes_to_int(utils::splice(serializedTrustedInput, offset, 2));
+		trustedInput.random = utils::BytesToInt(utils::Splice(serializedTrustedInput, offset, 2));
 		offset += 2;
 
-		trustedInput.prevTxId = utils::splice(serializedTrustedInput, offset, 32);
+		trustedInput.prevTxId = utils::Splice(serializedTrustedInput, offset, 32);
 		offset += 32;
 
-		trustedInput.outIndex = utils::bytes_to_int(utils::splice(serializedTrustedInput, offset, 4), true);
+		trustedInput.outIndex = utils::BytesToInt(utils::Splice(serializedTrustedInput, offset, 4), true);
 		offset += 4;
 
-		trustedInput.amount = utils::bytes_to_int(utils::splice(serializedTrustedInput, offset, 8), true);
+		trustedInput.amount = utils::BytesToInt(utils::Splice(serializedTrustedInput, offset, 8), true);
 		offset += 8;
 
-		trustedInput.hmac = utils::splice(serializedTrustedInput, offset, 8);
+		trustedInput.hmac = utils::Splice(serializedTrustedInput, offset, 8);
 		offset += 8;
 
 		if (offset != serializedTrustedInput.size())
@@ -307,14 +299,14 @@ namespace ledger
 		auto offset = 0;
 
 		std::vector<uint8_t> data;
-		utils::append_uint32(data, indexLookup);
+		utils::AppendUint32(data, indexLookup);
 
-		utils::append_vector(data, serializedTransaction);
+		utils::AppendVector(data, serializedTransaction);
 
 		while (offset != data.size())
 		{
 			auto chunkSize = data.size() - offset > MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : data.size() - offset;
-			chunks.push_back(utils::splice(data, offset, chunkSize));
+			chunks.push_back(utils::Splice(data, offset, chunkSize));
 			offset += chunkSize;
 		}
 
@@ -347,7 +339,7 @@ namespace ledger
 
 			std::vector<uint8_t> changePathData;
 			changePathData.push_back(serializedChangePath.size() / 4);
-			utils::append_vector(changePathData, serializedChangePath);
+			utils::AppendVector(changePathData, serializedChangePath);
 
 			auto result = transport_->exchange(APDU::CLA, ins, p1, p2, changePathData);
 			auto err = std::get<0>(result);
@@ -377,9 +369,9 @@ namespace ledger
 
 			auto output = tx.outputs[i];
 			std::vector<uint8_t> outputData;
-			utils::append_uint64(outputData, output.amount, true);
-			utils::append_vector(outputData, CreateVarint(output.script.size()));
-			utils::append_vector(outputData, output.script);
+			utils::AppendUint64(outputData, output.amount, true);
+			utils::AppendVector(outputData, CreateVarint(output.script.size()));
+			utils::AppendVector(outputData, output.script);
 
 			auto result = transport_->exchange(APDU::CLA, ins, p1, p2, outputData);
 			auto err = std::get<0>(result);
@@ -396,9 +388,9 @@ namespace ledger
 		auto p2 = isNewTransaction ? 0x02 : 0x80;
 
 		std::vector<uint8_t> data;
-		utils::append_uint32(data, tx.version, true);
-		utils::append_uint32(data, tx.time, true);
-		utils::append_vector(data, CreateVarint(trustedInputs.size()));
+		utils::AppendUint32(data, tx.version, true);
+		utils::AppendUint32(data, tx.time, true);
+		utils::AppendVector(data, CreateVarint(trustedInputs.size()));
 
 		auto result = transport_->exchange(APDU::CLA, ins, p1, p2, data);
 		auto err = std::get<0>(result);
@@ -415,11 +407,11 @@ namespace ledger
 			std::vector<uint8_t> _data;
 			_data.push_back(0x01);
 			_data.push_back(trustedInput.serialized.size());
-			utils::append_vector(_data, trustedInput.serialized);
-			utils::append_vector(_data, CreateVarint(_script.size()));
+			utils::AppendVector(_data, trustedInput.serialized);
+			utils::AppendVector(_data, CreateVarint(_script.size()));
 
-			utils::printHex(trustedInput.serialized);
-			utils::printHex(_data);
+			utils::PrintHex(trustedInput.serialized);
+			utils::PrintHex(_data);
 
 			auto result = transport_->exchange(APDU::CLA, ins, p1, p2, _data);
 			auto err = std::get<0>(result);
@@ -428,8 +420,8 @@ namespace ledger
 				throw err;
 
 			std::vector<uint8_t> scriptData;
-			utils::append_vector(scriptData, _script);
-			utils::append_uint32(scriptData, 0xfffffffd, true);
+			utils::AppendVector(scriptData, _script);
+			utils::AppendUint32(scriptData, 0xfffffffd, true);
 
 			result = transport_->exchange(APDU::CLA, ins, p1, p2, scriptData);
 			err = std::get<0>(result);
@@ -460,27 +452,21 @@ namespace ledger
 
 			TxInput txInput;
 			txInput.prevout = trustedInput.prevTxId;
-			// TODO GK - do some magic with key?
-			auto scriptPubKey = utxoTx.outputs[std::get<1>(rawUtxo)].script;
-			utils::printHex(scriptPubKey);
 
 			auto publicKeyResult = GetPublicKey(signPaths[i], false);
-			auto publicKey = utils::compressPubKey(std::get<0>(publicKeyResult));
-			std::cout << "compressed keyd:";
-			utils::printHex(publicKey);
+			auto publicKey = utils::CompressPubKey(std::get<0>(publicKeyResult));
+
 			auto pubKeyHash = Hash160(publicKey);
 			std::vector<uint8_t> pubKeyHashVector(pubKeyHash.begin(), pubKeyHash.end());
-			utils::printHex(publicKey);
-			utils::printHex(pubKeyHashVector);
+
 			std::vector<uint8_t> finalScriptPubKey;
 			finalScriptPubKey.push_back(0x76);
 			finalScriptPubKey.push_back(0xa9);
 			finalScriptPubKey.push_back(0x14);
-			utils::append_vector(finalScriptPubKey, pubKeyHashVector);
+			utils::AppendVector(finalScriptPubKey, pubKeyHashVector);
 			finalScriptPubKey.push_back(0x88);
 			finalScriptPubKey.push_back(0xac);
-			utils::printHex(finalScriptPubKey);
-			// txInput.script = utxoTx.outputs[std::get<1>(rawUtxo)].script;
+
 			txInput.script = finalScriptPubKey;
 			txInput.sequence = 0xfffffffd;
 
@@ -498,7 +484,7 @@ namespace ledger
 			// utils::printHex(publicKey);
 
 			auto publicKey = utils::HexToBytes("0472a26b18ad78c0dbb966c2fb3abcd2427bd6ce452955732f5f177d7a251cfe63cedd9f63cdc13fde7df3853dd9040914ac31e000e9e136fff642ae8f98428559");
-			auto compressedPubKey = utils::compressPubKey(publicKey);
+			auto compressedPubKey = utils::CompressPubKey(publicKey);
 			auto publicKeyHash = Hash160(compressedPubKey);
 
 			// TODO GK - extract into function and refactor
@@ -522,7 +508,7 @@ namespace ledger
 			// changeScriptPublicKey.push_back(0xac);
 			changeScriptPublicKey.push_back(0xa9);
 			changeScriptPublicKey.push_back(0x14);
-			utils::append_vector(changeScriptPublicKey, std::vector<uint8_t>(publicKeyHash.begin(), publicKeyHash.end()));
+			utils::AppendVector(changeScriptPublicKey, std::vector<uint8_t>(publicKeyHash.begin(), publicKeyHash.end()));
 			changeScriptPublicKey.push_back(0x87);
 
 			TxOutput txChangeOutput;
@@ -544,7 +530,7 @@ namespace ledger
 		scriptPublicKey.push_back(0xa9);
 		scriptPublicKey.push_back(0x14);
 		auto addressDecoded = Base58Decode(address);
-		utils::append_vector(scriptPublicKey, std::vector<uint8_t>(addressDecoded.begin() + 1, addressDecoded.end() - 4));
+		utils::AppendVector(scriptPublicKey, std::vector<uint8_t>(addressDecoded.begin() + 1, addressDecoded.end() - 4));
 		scriptPublicKey.push_back(0x88);
 		scriptPublicKey.push_back(0xac);
 
@@ -575,9 +561,9 @@ namespace ledger
 
 			std::vector<uint8_t> data;
 			data.push_back(serializedChangePath.size() / 4);
-			utils::append_vector(data, serializedChangePath);
+			utils::AppendVector(data, serializedChangePath);
 			data.push_back(0x00);
-			utils::append_uint32(data, locktime);
+			utils::AppendUint32(data, locktime);
 			data.push_back(0x01);
 
 			auto result = transport_->exchange(APDU::CLA, ins, p1, p2, data);
@@ -586,13 +572,13 @@ namespace ledger
 			if (err != Error::SUCCESS)
 				throw err;
 
-			utils::printHex(buffer);
+			utils::PrintHex(buffer);
 
 			if (buffer[0] & 0x01)
 			{
 				std::vector<uint8_t> data;
 				data.push_back(0x30);
-				utils::append_vector(data, std::vector<uint8_t>(buffer.begin() + 1, buffer.end()));
+				utils::AppendVector(data, std::vector<uint8_t>(buffer.begin() + 1, buffer.end()));
 				signatures.push_back({{1}, data});
 			}
 			else

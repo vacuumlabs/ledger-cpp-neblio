@@ -28,13 +28,13 @@ int getPublicKey()
   auto chainCode = std::get<2>(result);
 
   std::cout << "Public key: ";
-  utils::printHex(pubKey);
+  utils::PrintHex(pubKey);
 
   auto address = std::string(addressVec.begin(), addressVec.end());
   std::cout << "Address: " << address << std::endl;
 
   std::cout << "Chain code: ";
-  utils::printHex(chainCode);
+  utils::PrintHex(chainCode);
 
   return 0;
 }
@@ -55,7 +55,7 @@ int getTrustedInputFromSerializedTx()
   }
 
   auto trustedInput = std::get<1>(result);
-  utils::printHex(trustedInput);
+  utils::PrintHex(trustedInput);
 }
 
 int getTrustedInputFromDeserializedTx()
@@ -75,7 +75,7 @@ int getTrustedInputFromDeserializedTx()
   }
 
   auto trustedInput = std::get<1>(result);
-  utils::printHex(trustedInput);
+  utils::PrintHex(trustedInput);
 }
 
 void signTransaction()
@@ -114,6 +114,6 @@ int main(int argc, char *argv[])
   }
   else
   {
-    getPublicKey();
+    signTransaction();
   }
 }

@@ -18,11 +18,11 @@ namespace ledger
 		// path length
 		payload.push_back(5);
 		// m/44'/146'/0'/0/0 derivation path
-		utils::append_vector(payload, utils::int_to_bytes(utils::hardened(44), 4));
-		utils::append_vector(payload, utils::int_to_bytes(utils::hardened(146), 4));
-		utils::append_vector(payload, utils::int_to_bytes(utils::hardened(account), 4));
-		utils::append_vector(payload, utils::int_to_bytes(0, 4));
-		utils::append_vector(payload, utils::int_to_bytes(0, 4));
+		utils::AppendVector(payload, utils::IntToBytes(utils::Harden(44), 4));
+		utils::AppendVector(payload, utils::IntToBytes(utils::Harden(146), 4));
+		utils::AppendVector(payload, utils::IntToBytes(utils::Harden(account), 4));
+		utils::AppendVector(payload, utils::IntToBytes(0, 4));
+		utils::AppendVector(payload, utils::IntToBytes(0, 4));
 
 		auto result = transport_->exchange(APDU::CLA, APDU::INS_GET_PUBLIC_KEY, confirm, 0x00, payload);
 		auto err = std::get<0>(result);
@@ -34,7 +34,7 @@ namespace ledger
 
 	std::tuple<Error, std::vector<uint8_t>> Ledger::sign(uint32_t account, const std::vector<uint8_t> &msg)
 	{
-		auto payload = utils::int_to_bytes(account, 4);
+		auto payload = utils::IntToBytes(account, 4);
 		payload.insert(payload.end(), msg.begin(), msg.end());
 		auto result = transport_->exchange(APDU::CLA, APDU::INS_SIGN, 0x00, 0x00, payload);
 		auto err = std::get<0>(result);
@@ -101,11 +101,11 @@ namespace ledger
 
 		auto offset = 0;
 
-		auto wtf = utils::splice(transaction, offset, 1);
-		tx.version = utils::bytes_to_int(wtf);
+		auto wtf = utils::Splice(transaction, offset, 1);
+		tx.version = utils::BytesToInt(wtf);
 		offset += 4;
 
-		tx.time = utils::bytes_to_int(utils::splice(transaction, offset, 4));
+		tx.time = utils::BytesToInt(utils::Splice(transaction, offset, 4));
 		offset += 4;
 
 		auto varint = GetVarint(transaction, offset);
@@ -116,15 +116,15 @@ namespace ledger
 		{
 			TxInput input;
 
-			input.prevout = utils::splice(transaction, offset, 36);
+			input.prevout = utils::Splice(transaction, offset, 36);
 			offset += 36;
 
 			varint = GetVarint(transaction, offset);
 			offset += std::get<1>(varint);
-			input.script = utils::splice(transaction, offset, std::get<0>(varint));
+			input.script = utils::Splice(transaction, offset, std::get<0>(varint));
 
 			offset += std::get<0>(varint);
-			input.sequence = utils::bytes_to_int(utils::splice(transaction, offset, 4));
+			input.sequence = utils::BytesToInt(utils::Splice(transaction, offset, 4));
 			offset += 4;
 
 			tx.inputs.push_back(input);
@@ -138,19 +138,19 @@ namespace ledger
 		{
 			TxOutput output;
 
-			output.amount = utils::bytes_to_uint64(utils::splice(transaction, offset, 8));
+			output.amount = utils::BytesToUint64(utils::Splice(transaction, offset, 8));
 			offset += 8;
 
 			varint = GetVarint(transaction, offset);
 			offset += std::get<1>(varint);
 
-			output.script = utils::splice(transaction, offset, std::get<0>(varint));
+			output.script = utils::Splice(transaction, offset, std::get<0>(varint));
 			offset += std::get<0>(varint);
 
 			tx.outputs.push_back(output);
 		}
 
-		tx.locktime = utils::bytes_to_int(utils::splice(transaction, offset, 4));
+		tx.locktime = utils::BytesToInt(utils::Splice(transaction, offset, 4));
 
 		return tx;
 	}
@@ -161,12 +161,12 @@ namespace ledger
 		if (firstRound)
 		{
 			std::vector<uint8_t> prefix;
-			utils::append_uint32(prefix, indexLookup);
+			utils::AppendUint32(prefix, indexLookup);
 			std::reverse(prefix.begin(), prefix.end());
-			utils::append_vector(data, prefix);
+			utils::AppendVector(data, prefix);
 		}
 
-		utils::append_vector(data, transactionData);
+		utils::AppendVector(data, transactionData);
 
 		auto result = transport_->exchange(APDU::CLA, APDU::INS_GET_TRUSTED_INPUT, firstRound ? 0x00 : 0x80, 0x00, data);
 		auto err = std::get<0>(result);
@@ -190,12 +190,12 @@ namespace ledger
 
 			if ((offset + blockSize) != script.size())
 			{
-				scriptBlocks.push_back(utils::splice(script, offset, blockSize));
+				scriptBlocks.push_back(utils::Splice(script, offset, blockSize));
 			}
 			else
 			{
-				auto block = utils::splice(script, offset, blockSize);
-				// utils::append_uint32(block, sequence);
+				auto block = utils::Splice(script, offset, blockSize);
+				// utils::AppendUint32(block, sequence);
 
 				scriptBlocks.push_back(block);
 			}
@@ -222,11 +222,11 @@ namespace ledger
 		auto tx = SplitTransaction(transaction);
 
 		std::vector<uint8_t> data;
-		utils::append_uint32(data, indexLookup);
+		utils::AppendUint32(data, indexLookup);
 		std::reverse(data.begin(), data.end());
-		utils::append_uint32(data, tx.version);
-		utils::append_uint32(data, tx.time);
-		utils::append_vector(data, CreateVarint(tx.inputs.size()));
+		utils::AppendUint32(data, tx.version);
+		utils::AppendUint32(data, tx.time);
+		utils::AppendVector(data, CreateVarint(tx.inputs.size()));
 
 		// auto result = GetTrustedInputRaw(true, indexLookup, data);
 		// if (std::get<0>(result) != Error::SUCCESS)
@@ -237,8 +237,8 @@ namespace ledger
 		for (auto input : tx.inputs)
 		{
 			// std::vector<uint8_t> data;
-			utils::append_vector(data, input.prevout);
-			utils::append_vector(data, CreateVarint(input.script.size()));
+			utils::AppendVector(data, input.prevout);
+			utils::AppendVector(data, CreateVarint(input.script.size()));
 
 			// result = GetTrustedInputRaw(false, 0, data);
 			// if (std::get<0>(result) != Error::SUCCESS)
@@ -251,8 +251,8 @@ namespace ledger
 			// {
 			// 	return {error, {}};
 			// }
-			utils::append_vector(data, input.script);
-			utils::append_vector(data, utils::int_to_bytes(input.sequence, 4));
+			utils::AppendVector(data, input.script);
+			utils::AppendVector(data, utils::IntToBytes(input.sequence, 4));
 		}
 
 		// result = GetTrustedInputRaw(false, 0, CreateVarint(tx.outputs.size()));
@@ -261,14 +261,14 @@ namespace ledger
 		// 	return {std::get<0>(result), {}};
 		// }
 
-		utils::append_vector(data, CreateVarint(tx.outputs.size()));
+		utils::AppendVector(data, CreateVarint(tx.outputs.size()));
 
 		for (auto output : tx.outputs)
 		{
 			// std::vector<uint8_t> data;
-			utils::append_uint64(data, output.amount);
-			utils::append_vector(data, CreateVarint(output.script.size()));
-			utils::append_vector(data, output.script);
+			utils::AppendUint64(data, output.amount);
+			utils::AppendVector(data, CreateVarint(output.script.size()));
+			utils::AppendVector(data, output.script);
 
 			// result = GetTrustedInputRaw(false, 0, data);
 			// if (std::get<0>(result) != Error::SUCCESS)
@@ -277,10 +277,10 @@ namespace ledger
 			// }
 		}
 
-		auto wtf = utils::int_to_bytes(tx.locktime, 4);
+		auto wtf = utils::IntToBytes(tx.locktime, 4);
 		std::reverse(wtf.begin(), wtf.end());
 		// return GetTrustedInputRaw(false, 0, wtf);
-		utils::append_vector(data, wtf);
+		utils::AppendVector(data, wtf);
 
 		auto result = ProcessScriptBlocks(data, 0);
 		if (std::get<0>(result) != Error::SUCCESS)

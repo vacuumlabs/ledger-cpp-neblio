@@ -36,7 +36,7 @@ namespace ledger
 		if (data.empty())
 			return -1;
 
-		auto data_new = utils::int_to_bytes(data.size(), 2);
+		auto data_new = utils::IntToBytes(data.size(), 2);
 		data_new.insert(data_new.end(), data.begin(), data.end());
 
 		size_t offset = 0;
@@ -48,7 +48,7 @@ namespace ledger
 			// Header: channel (0x0101), tag (0x05), sequence index
 			std::vector<uint8_t> header{0x01, 0x01, 0x05};
 
-			auto seq_idx_bytes = utils::int_to_bytes(seq_idx, 2);
+			auto seq_idx_bytes = utils::IntToBytes(seq_idx, 2);
 			header.insert(header.end(), seq_idx_bytes.begin(), seq_idx_bytes.end());
 
 			std::vector<uint8_t>::iterator it;
@@ -92,11 +92,11 @@ namespace ledger
 		assert(data_chunk[1] == 0x01);
 		assert(data_chunk[2] == 0x05);
 
-		auto seq_idx_bytes = utils::int_to_bytes(seq_idx, 2);
+		auto seq_idx_bytes = utils::IntToBytes(seq_idx, 2);
 		assert(seq_idx_bytes[0] == data_chunk[3]);
 		assert(seq_idx_bytes[1] == data_chunk[4]);
 
-		auto data_len = utils::bytes_to_int(std::vector<uint8_t>(data_chunk.begin() + 5, data_chunk.begin() + 7));
+		auto data_len = utils::BytesToInt(std::vector<uint8_t>(data_chunk.begin() + 5, data_chunk.begin() + 7));
 		std::vector<uint8_t> data(data_chunk.begin() + 7, data_chunk.end());
 
 		while (data.size() < data_len)
@@ -108,7 +108,7 @@ namespace ledger
 			data.insert(data.end(), tmp.begin() + 5, tmp.end());
 		}
 
-		auto sw = utils::bytes_to_int(std::vector<uint8_t>(data.begin() + data_len - 2, data.begin() + data_len));
+		auto sw = utils::BytesToInt(std::vector<uint8_t>(data.begin() + data_len - 2, data.begin() + data_len));
 		rdata = std::vector<uint8_t>(data.begin(), data.begin() + data_len - 2);
 
 		return sw;
