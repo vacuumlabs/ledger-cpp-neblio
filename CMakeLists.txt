@@ -22,6 +22,8 @@ find_package(hidapi REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 set(LEDGERCPP_SOURCE
+        ledgercpp/bip32.h
+        ledgercpp/bip32.cpp
         ledgercpp/comm.h
         ledgercpp/error.cpp
         ledgercpp/error.h

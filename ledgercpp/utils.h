@@ -22,10 +22,8 @@ namespace ledger::utils
 	}
 	void AppendUint32(std::vector<uint8_t> &vector, uint32_t n, bool littleEndian = false);
 	void AppendUint64(std::vector<uint8_t> &vector, uint64_t n, bool littleEndian = false);
-	uint32_t Harden(uint32_t n);
 	std::vector<uint8_t> Splice(std::vector<uint8_t> vec, int start, int length);
 	std::vector<uint8_t> CompressPubKey(std::vector<uint8_t> pubKey);
-	std::vector<uint8_t> ParseHDKeypath(const std::string &keypath_str);
 } // namespace ledger::utils
 
 #endif

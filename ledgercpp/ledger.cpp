@@ -3,6 +3,7 @@
 #include "hash.h"
 #include "utils.h"
 #include "base58.h"
+#include "bip32.h"
 
 #include <algorithm>
 #include <iostream>
@@ -28,7 +29,7 @@ namespace ledger
 	{
 		auto payload = std::vector<uint8_t>();
 
-		auto pathBytes = utils::ParseHDKeypath(path);
+		auto pathBytes = bip32::ParseHDKeypath(path);
 		payload.push_back(pathBytes.size() / 4);
 		utils::AppendVector(payload, pathBytes);
 
@@ -335,7 +336,7 @@ namespace ledger
 		auto p1 = 0xFF;
 		if (changePath.length() > 0)
 		{
-			auto serializedChangePath = utils::ParseHDKeypath(changePath);
+			auto serializedChangePath = bip32::ParseHDKeypath(changePath);
 
 			std::vector<uint8_t> changePathData;
 			changePathData.push_back(serializedChangePath.size() / 4);
@@ -557,7 +558,7 @@ namespace ledger
 			auto p1 = 0x00;
 			auto p2 = 0x00;
 
-			auto serializedChangePath = utils::ParseHDKeypath(signPaths[i]);
+			auto serializedChangePath = bip32::ParseHDKeypath(signPaths[i]);
 
 			std::vector<uint8_t> data;
 			data.push_back(serializedChangePath.size() / 4);
